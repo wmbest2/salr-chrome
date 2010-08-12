@@ -172,7 +172,7 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
     }
 
     if (this.settings.enableKeyboardShortcuts == 'true') {
-        this.hotKeyManager = new HotKeyManager();
+        this.hotKeyManager = new HotKeyManager(this.quickReply);
     }
 
     if (this.settings.displayOmnibarIcon == 'true') {
