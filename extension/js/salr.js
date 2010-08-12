@@ -148,7 +148,9 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
 
             break;
         case 'bookmarkthreads.php':
-            this.renderOpenUpdatedThreadsButton();
+            if (this.settings.openAllUnreadLink == 'true') {
+                this.renderOpenUpdatedThreadsButton();
+            }
 
             if (this.settings.highlightModAdmin == 'true') {
                 this.highlightModAdminPosts();
