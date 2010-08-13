@@ -23,29 +23,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-var settings = {};
-var pageNavigator = null;
-var quickReply = null;
-var mouseGesturesController = {};
+function SALR(settings, base_image_uri) {
+    this.settings = settings;
+    this.base_image_uri = base_image_uri;
 
-/**
- * Event listener for when a user enters their username within
- * the extension UI.  Currently this only works when you're
- * viewing forums.somethingawful.com since we don't have any
- * events that can be fired on a localStorage event that occurs
- * within the extension.
- *
- */
-var port = chrome.extension.connect();
+    this.pageNavigator = null;
+    this.quickReply = null;
+    this.mouseGesturesContoller = null;
+    this.hotKeyManager = null;
 
-port.onMessage.addListener(function(data) {
+    this.pageInit();
+};
 
-    settings = data;
-    
+SALR.prototype.pageInit = function() {
     // Update the styles now that we have
     // the settings
-    updateStyling();
-	modifyImages();
+    this.updateStyling();
+	this.modifyImages();
+	
+    jQuery.expr[":"].econtains = function(obj, index, meta, stack){
+        return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() == meta[3].toLowerCase();
+    }
 
 	
 jQuery.expr[":"].econtains = function(obj, index, meta, stack){
@@ -56,158 +54,156 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
     switch (findCurrentPage()) {
         case '':
         case 'index.php':
-            if (settings.highlightModAdmin == 'true') {
-                skimModerators();
+            if (this.settings.highlightModAdmin == 'true') {
+                this.skimModerators();
             }
 
             break;
         case 'forumdisplay.php':
         case 'showthread.php':
-            if (settings.inlineVideo == 'true') {
-                inlineYoutubes();
+            if (this.settings.inlineVideo == 'true') {
+                this.inlineYoutubes();
             }
 
-            if (settings.displayPageNavigator == 'true') {
-                pageNavigator = new PageNavigator();
+            if (this.settings.displayPageNavigator == 'true') {
+                this.pageNavigator = new PageNavigator(this.base_image_uri);
             }
 
-            updateForumsList();
+            this.updateForumsList();
             
-            if (settings.highlightFriends == 'true') {
-                highlightFriendPosts();    
+            if (this.settings.highlightFriends == 'true') {
+                this.highlightFriendPosts();    
             }
         
-            if (settings.highlightOP == 'true') {
-                highlightOPPosts();    
+            if (this.settings.highlightOP == 'true') {
+                this.highlightOPPosts();    
             }
 
-            if (settings.highlightSelf == 'true') {
-                highlightOwnPosts();
+            if (this.settings.highlightSelf == 'true') {
+                this.highlightOwnPosts();
             }
 
-            if (settings.highlightModAdmin == 'true') {
-                skimModerators();
-                highlightModAdminPosts();
+            if (this.settings.highlightModAdmin == 'true') {
+                this.skimModerators();
+                this.highlightModAdminPosts();
             }
 
-            if (settings.enableUserNotes == 'true') {
-                displayUserNotes();
+            if (this.settings.enableUserNotes == 'true') {
+                this.displayUserNotes();
             }
 
-            if (settings.boxQuotes == 'true') {
-                boxQuotes();
+            if (this.settings.boxQuotes == 'true') {
+                this.boxQuotes();
             }
 
-            if (settings.highlightOwnUsername == 'true') {
-                highlightOwnUsername();
+            if (this.settings.highlightOwnUsername == 'true') {
+                this.highlightOwnUsername();
             }
 
-            if (settings.highlightOwnQuotes == 'true') {
-                highlightOwnQuotes();
+            if (this.settings.highlightOwnQuotes == 'true') {
+                this.highlightOwnQuotes();
             }
 
-            displaySinglePostLink();
-            
-            //hideSignatures();
+            this.displaySinglePostLink();
 
-            if (settings.enableQuickReply == 'true') {
-                if (settings.forumPostKey) {
-                    quickReply = new QuickReplyBox(settings.forumPostKey);
-                    bindQuickReply();
+            if (this.settings.enableQuickReply == 'true') {
+                if (this.settings.forumPostKey) {
+                    this.quickReply = new QuickReplyBox(this.settings.forumPostKey, this.base_image_uri, this.settings.quickReplyBookmark == 'true');
+                    this.bindQuickReply();
                 }
             }
             
-            if (settings.enableThreadNotes == 'true') {
-                threadNotes();
+            if (this.settings.enableThreadNotes == 'true') {
+                this.threadNotes();
             }
 
-            if (settings.searchThreadHide != 'true') {
-                addSearchThreadForm();
+            if (!this.settings.searchThreadHide == 'true') {
+                this.addSearchThreadForm();
             }
 
-            renderWhoPostedInThreadLink();
+            this.renderWhoPostedInThreadLink();
 
             break;
         case 'newreply.php':
-            if (!settings.forumPostKey) {
-                findFormKey();
+            if (!this.settings.forumPostKey) {
+                this.findFormKey();
             }
             
-            if (settings.qneProtection == 'true') {
-                quoteNotEditProtection();
+            if (this.settings.qneProtection == 'true') {
+                this.quoteNotEditProtection();
             }
 
             break;
         case 'usercp.php':
-            updateUsernameFromCP();
-            updateFriendsList();
+            this.updateUsernameFromCP();
+            this.updateFriendsList();
 
-            if (settings.openAllUnreadLink == 'true') {
-                renderOpenUpdatedThreadsButton();
+            if (this.settings.openAllUnreadLink == 'true') {
+                this.renderOpenUpdatedThreadsButton();
             }
 
-            if (settings.highlightModAdmin == 'true') {
-                highlightModAdminPosts();
+            if (this.settings.highlightModAdmin == 'true') {
+                this.highlightModAdminPosts();
             }
 
             break;
         case 'bookmarkthreads.php':
-            renderOpenUpdatedThreadsButton();
-            if (settings.highlightModAdmin == 'true') {
-                highlightModAdminPosts();
+            this.renderOpenUpdatedThreadsButton();
+
+            if (this.settings.highlightModAdmin == 'true') {
+                this.highlightModAdminPosts();
             }
 
             break;
         case 'misc.php':
             if (window.location.href.indexOf('action=whoposted') >= 0) {
-                highlightModAdminPosts();
+                this.highlightModAdminPosts();
             }
 
         break;
     }
 
-    if (pageNavigator) {
-        pageNavigator.display();
+    if (this.pageNavigator) {
+        this.pageNavigator.display();
     }
 
-    if (settings.enableMouseGestures == 'true') {
-        mouseGesturesController = new MouseGesturesController();
+    if (this.settings.enableMouseGestures == 'true') {
+        this.mouseGesturesController = new MouseGesturesController(this.base_image_uri);
     }
 
-    if (settings.enableKeyboardShortcuts == 'true') {
-        hotKeyManager = new HotKeyManager();
+    if (this.settings.enableKeyboardShortcuts == 'true') {
+        this.hotKeyManager = new HotKeyManager();
     }
 
-    if (settings.displayOmnibarIcon == 'true') {
+    if (this.settings.displayOmnibarIcon == 'true') {
         // Display the page action
-        port.postMessage({
+        postMessage({
             'message': 'ShowPageAction'
         });
     }
-});
+};
 
-// Request the username from the extension UI
-port.postMessage({
-    'message': 'GetPageSettings'
-});
-
-function openSettings() {
-    port.postMessage({'message': 'OpenSettings'});
-}
+SALR.prototype.openSettings = function() {
+    postMessage({'message': 'OpenSettings'});
+};
 
 // Since we have to wait to receive the settings from the extension,
 // stash the styling logic in it's own function that we can call
 // once we're ready
-function updateStyling() {
+SALR.prototype.updateStyling = function() {
 
+    var that = this;
 
     jQuery('tr.thread').each(function() {
         var thread = jQuery(this);
         var newPosts = false;
-        if (settings.disableCustomButtons != 'true') {
+
+        if (!that.settings.disableCustomButtons || that.settings.disableCustomButtons == 'false') {
 
             // Re-style the new post count link
             jQuery('a.count', thread).each(function() {
+
+                var other = that;
 
                 newPosts = true;
                 var newPostCount = jQuery(this).html();
@@ -222,17 +218,20 @@ function updateStyling() {
                 jQuery(this).css("width", "7px");
                 jQuery(this).css("height", "16px");
                 jQuery(this).css("padding-right", "11px");
-                jQuery(this).css("background-image", "url('" + chrome.extension.getURL("images/") + "lastpost.png')");
+                jQuery(this).css("background-image", "url('" + other.base_image_uri + "lastpost.png')");
 
-                if (settings.inlinePostCounts == 'true') {
+                if (that.settings.inlinePostCounts == 'true') {
                     jQuery('div.lastseen', thread).each(function() {
                         // Add in number of new replies
                         var currentHtml = jQuery(this).html();
             
                         // Strip HTML tags
                         newPostCount = parseInt(newPostCount.replace(/(<([^>]+)>)/ig, ""));
-                        // Set the HTML value
-                        jQuery(this).html("<div style='font-size: 12px; float: left; margin-top: 4px; padding-right: 4px;'>(" + newPostCount + ")</div>" + currentHtml);
+
+                        if (newPostCount) {
+                            // Set the HTML value
+                            jQuery(this).html("<div style='font-size: 12px; float: left; margin-top: 4px; padding-right: 4px;'>(" + newPostCount + ")</div>" + currentHtml);
+                        }
                     });
                 } else {
                     // Display number of new replies for each thread
@@ -242,17 +241,22 @@ function updateStyling() {
             
                         // Strip HTML tags
                         newPostCount = parseInt(newPostCount.replace(/(<([^>]+)>)/ig, ""));
-                        // Set the HTML value
-                        jQuery(this).html(currentHtml + "<br /><div style='font-size: 12px;'>(" + newPostCount + ")</div>");
+
+                        if (newPostCount) {
+                            // Set the HTML value
+                            jQuery(this).html(currentHtml + "<br /><div style='font-size: 12px;'>(" + newPostCount + ")</div>");
+                        }
                     });
                 }
             });
 
             // Re-style the "mark unread" link
             jQuery('a.x', thread).each(function() {
+                var other = that;
+
                 // Set the image styles
                 jQuery(this).css("background", "none");
-                jQuery(this).css("background-image", "url('" + chrome.extension.getURL("images/") + "unvisit.png')");
+                jQuery(this).css("background-image", "url('" + other.base_image_uri + "unvisit.png')");
                 jQuery(this).css("height", "16px");
                 jQuery(this).css("width", "14px");
 
@@ -276,43 +280,47 @@ function updateStyling() {
         if (thread.attr('class') == 'thread seen') {
             // If the thread has new posts, display the green shade,
             // otherwise show the blue shade
-            var darkShade = (newPosts) ? settings.darkNewReplies : settings.darkRead;
-            var lightShade = (newPosts) ? settings.lightNewReplies : settings.lightRead;
+            var darkShade = (newPosts) ? that.settings.darkNewReplies : that.settings.darkRead;
+            var lightShade = (newPosts) ? that.settings.lightNewReplies : that.settings.lightRead;
 
             // Thread icon, author, view count, and last post
             jQuery(this).children('td.icon, td.author, td.views, td.lastpost').each(function() {
+                var other = that;
+
                 jQuery(this).css({ "background-color" : darkShade, 
-                                   "background-image" : "url('" + chrome.extension.getURL("images/") + "gradient.png')",
+                                   "background-image" : "url('" + other.base_image_uri + "gradient.png')",
                                    "background-repeat" : "repeat-x"
                                  });
             });
 
             // Thread title, replies, and rating
             jQuery(this).find('td.title, td.replies, td.rating').each(function() {
+                var other = that;
+
                 jQuery(this).css({ "background-color" : lightShade, 
-                                   "background-image" : "url('" + chrome.extension.getURL("images/") + "gradient.png')",
+                                   "background-image" : "url('" + other.base_image_uri + "gradient.png')",
                                    "background-repeat" : "repeat-x"
                                  });
             });
         }
 
         // Send threads without unread posts to the end of the list
-        if (!newPosts && settings.displayNewPostsFirst == 'true') {
+        if (!newPosts && that.settings.displayNewPostsFirst == 'true') {
             thread.parent().append(thread);
         }
     });
 
 	
-	if(settings.displayConfigureSalr == 'true') {
+	if(this.settings.displayConfigureSalr == 'true') {
 		jQuery('#navigation li.first').next('li').next('li').after(" - <a id='configure' href='#'>Configure SALR</a>");
 	}
 	
 	jQuery('#configure').click(function() {
-		openSettings();
+		that.openSettings();
 	});
     
     // Hide header/footer links
-    if (settings.hideHeaderLinks == 'true') {
+    if (this.settings.hideHeaderLinks == 'true') {
         jQuery('div#globalmenu').each(function() {
             jQuery(this).html('');
             jQuery(this).css('height', '0px');
@@ -325,7 +333,7 @@ function updateStyling() {
     }
 
     // Hide the advertisements
-    if (settings.hideAdvertisements == 'true') {
+    if (this.settings.hideAdvertisements == 'true') {
         jQuery('div.oma_pal').each(function() {
             jQuery(this).remove();
         });
@@ -334,27 +342,26 @@ function updateStyling() {
             jQuery(this).remove();
         });
     }
-}
+};
 
-function modifyImages() {
-
+SALR.prototype.modifyImages = function() {
 	// Replace Links with Images
-	if (settings.replaceLinksWithImages == 'true') {
+	if (this.settings.replaceLinksWithImages == 'true') {
 
 		var subset = jQuery('.postbody a');
 
 		//NWS/NMS links
-		if(settings.dontReplaceLinkNWS == 'true')
+		if(this.settings.dontReplaceLinkNWS == 'true')
 		{
 			subset = subset.not(".postbody:has(img[title=':nws:']) a").not(".postbody:has(img[title=':nms:']) a");
 		}
 
 		//
-		if(settings.dontReplaceLinkSpoiler == 'true') {
+		if(this.settings.dontReplaceLinkSpoiler == 'true') {
 			subset = subset.not('.bbc-spoiler a');	
 		}
 
-		if(settings.dontReplaceLinkRead == 'true') {
+		if(this.settings.dontReplaceLinkRead == 'true') {
 			subset = subset.not('.seen1 a').not('.seen2 a');
 		}
 
@@ -369,14 +376,14 @@ function modifyImages() {
 	}
 
 	// Replace inline Images with Links
-	if (settings.replaceImagesWithLinks == 'true') {
+	if (this.settings.replaceImagesWithLinks == 'true') {
 		var subset = jQuery('.postbody img');
 		
-		if(settings.replaceImagesReadOnly == 'true') {
+		if(this.settings.replaceImagesReadOnly == 'true') {
 			subset = subset.filter('.seen1 img, .seen2 img');
 		}
 		
-		//if(settings.dontReplaceEmoticons == 'true') {
+		//if(settings.dontReplaceEmoticons) {
 			subset = subset.not('img[src*=http://i.somethingawful.com/forumsystem/emoticons/]');
 			subset = subset.not('img[src*=http://fi.somethingawful.com/images/smilies/]');
 		//}
@@ -388,7 +395,7 @@ function modifyImages() {
 		});
 	}
 
-	if (settings.restrictImageSize == 'true') {
+	if (this.settings.restrictImageSize == 'true') {
 		jQuery('.postbody img').each(function() {
             var width = jQuery(this).width();
             var height = jQuery(this).height();
@@ -411,12 +418,12 @@ function modifyImages() {
             }
         });
 	}
-}
+};
 
-function skimModerators() {
+SALR.prototype.skimModerators = function() {
     var modList;
     var modupdate = false;
-    if (settings.modList == null) {
+    if (this.settings.modList == null) {
         // Seed administrators. Is there a list for them?
         modList = { "12831" : {'username' :  'elpintogrande', 'mod' : 'A'},
                     "16393" : {'username' :  'Fistgrrl', 'mod' : 'A'},
@@ -434,7 +441,7 @@ function skimModerators() {
                    };
         modupdate = true;
     } else {
-        modList = JSON.parse(settings.modList);
+        modList = JSON.parse(this.settings.modList);
     }
 
     // TODO: How can you tell if a mod has been demodded?
@@ -466,16 +473,18 @@ function skimModerators() {
     });
 
     if (modupdate) {
-        port.postMessage({ 'message': 'ChangeSetting',
+        postMessage({ 'message': 'ChangeSetting',
                            'option' : 'modList',
                            'value'  : JSON.stringify(modList) });
     }
-}
+};
 
-function inlineYoutubes() {
+SALR.prototype.inlineYoutubes = function() {
+    var that = this;
+
 	//sort out youtube links
 	jQuery('.postbody a[href*="youtube.com"]').each(function() {
-			jQuery(this).css("background-color", settings.youtubeHighlight).addClass("salr-video");
+			jQuery(this).css("background-color", that.settings.youtubeHighlight).addClass("salr-video");
 	});
 	
 	jQuery(".salr-video").toggle(function(){ 
@@ -498,14 +507,14 @@ function inlineYoutubes() {
 			jQuery(this).next().remove();
 		}
 	);
-}
+};
 
 /**
  * Display Single Post View link under a users post
  *
  *
  */
-function displaySinglePostLink() {
+SALR.prototype.displaySinglePostLink = function() {
     var getPostID = function(element) {
         return jQuery('a[href^=#post]', element).attr('href').split('#post')[1];
     };
@@ -513,13 +522,13 @@ function displaySinglePostLink() {
     jQuery('td.postdate').each( function() {
         jQuery('a[href^=#post]', this).before('<a href="http://forums.somethingawful.com/showthread.php?action=showpost&postid='+getPostID(jQuery(this))+'">1</a> ');
     });
-}
+};
 
 /**
  * Open the list of who posted in a thread
  *
  */
-function renderWhoPostedInThreadLink() {
+SALR.prototype.renderWhoPostedInThreadLink = function() {
     var threadbar = jQuery('div.threadbar.top');
     if (!threadbar.length)
         return;
@@ -528,13 +537,15 @@ function renderWhoPostedInThreadLink() {
     var href = 'http://forums.somethingawful.com/misc.php?action=whoposted&threadid='+threadid;
     var linkHTML = '<div style="float:left;"><a href="'+href+'">Who Posted</a></div>';
     threadbar.prepend(linkHTML);
-}
+};
 
 /**
  * Open all of your tracked and updated threads in a new tab
  *
  */
-function renderOpenUpdatedThreadsButton() {
+SALR.prototype.renderOpenUpdatedThreadsButton = function() {
+    var that = this;
+
     jQuery('th.title:first').each( function() {
         var headerHTML = jQuery(this).html();
         var updatedHTML = headerHTML + '<div id="open-updated-threads"' +
@@ -547,42 +558,45 @@ function renderOpenUpdatedThreadsButton() {
 
         // Open all updated threads in tabs
         jQuery('#open-updated-threads').click( function() {
+            var other = that;
+
             jQuery('tr.thread').each( function() {
                 var img_split = jQuery('td.star > img', this).attr('src').split('/');
                 var img_name = img_split[img_split.length-1];
-                if (settings.ignore_bookmark_star != img_name) {
+                if (other.settings.ignore_bookmark_star != img_name) {
                     if (jQuery('a[class*=count]', this).length > 0) {
                         var href = jQuery('a[class*=count]', this).attr('href');
-                        port.postMessage({ 'message': 'OpenTab',
+                        // TODO: Fix this
+                        postMessage({ 'message': 'OpenTab',
                                            'url'  : 'http://forums.somethingawful.com'+href });
                     }
                 }
             });
         });
     });
-}
+};
 
 /**
  * Extract friends list from the User CP
  */
-function updateFriendsList() {
+SALR.prototype.updateFriendsList = function() {
     var friends = new Array();
 
     jQuery('div#buddylist td:nth-child(2)>a').each( function() {
         friends.push(this.title);
     });
 
-    port.postMessage({ 'message': 'ChangeSetting',
-                       'option' : 'friendsList',
-                       'value'  : JSON.stringify(friends) });
-}
+    postMessage({ 'message': 'ChangeSetting',
+                'option' : 'friendsList',
+                'value'  : JSON.stringify(friends) });
+};
 
 /**
  * Highlight the posts of friends
  */
-
-function highlightFriendPosts() {
-    var friends = JSON.parse(settings.friendsList);
+SALR.prototype.highlightFriendPosts = function() {
+    var that = this;
+    var friends = JSON.parse(this.settings.friendsList);
     var selector = '';
 
     if (friends == 0) {
@@ -599,63 +613,69 @@ function highlightFriendPosts() {
     jQuery('table.post:has('+selector+') td').each(function () {
         jQuery(this).css({
             'border-collapse' : 'collapse',
-            'background-color' : settings.highlightFriendsColor
+            'background-color' : that.settings.highlightFriendsColor
         });
     });
-}
+};
 
 /**
  * Highlight the posts by the OP
  */
-function highlightOPPosts() {
+SALR.prototype.highlightOPPosts = function() {
+    var that = this;
+
     jQuery('table.post:has(dt.author.op) td').each(function () {
         jQuery(this).css({
             'border-collapse' : 'collapse',
-            'background-color' : settings.highlightOPColor
+            'background-color' : that.settings.highlightOPColor
         });
     });
-}
+};
 
 /**
  * Highlight the posts by one self
  */
-function highlightOwnPosts() {
-    jQuery("table.post:has(dt.author:econtains('"+settings.username+"')) td").each(function () {
+SALR.prototype.highlightOwnPosts = function() {
+    var that = this;
+
+    jQuery("table.post:has(dt.author:econtains('"+that.settings.username+"')) td").each(function () {
         jQuery(this).css({
             'border-collapse' : 'collapse',
-            'background-color' : settings.highlightSelfColor
+            'background-color' : that.settings.highlightSelfColor
         });
     });
-}
+};
 
 /**
  * Highlight the posts by moderators and admins
  */
-function highlightModAdminPosts() {
+SALR.prototype.highlightModAdminPosts = function() {
     switch (findCurrentPage()) {
         case 'forumdisplay.php':
         case 'usercp.php':
         case 'bookmarkthreads.php':
-            highlightModAdminForumDisplay();
+            this.highlightModAdminForumDisplay();
             break;
         case 'showthread.php':
-            highlightModAdminShowThread();
+            this.highlightModAdminShowThread();
             break;
         case 'misc.php':
-            highlightModAdminWhoPosted();
+            this.highlightModAdminWhoPosted();
             break;
     }
-}
+};
 
 /**
  * Highlight the posts by moderators and admins
  * on the forum display page
  */
-function highlightModAdminForumDisplay() {
-    if (settings.modList == null)
+SALR.prototype.highlightModAdminForumDisplay = function() {
+    var that = this;
+
+    if (this.settings.modList == null)
         return;
 
-    var modList = JSON.parse(settings.modList);
+    var modList = JSON.parse(this.settings.modList);
 
     // Highlight mods and admin thread OPs on forumdisplay.php
     jQuery('td.author > a').each(function() {
@@ -664,10 +684,10 @@ function highlightModAdminForumDisplay() {
             var color;
             switch (modList[userid].mod) {
                 case 'M':
-                    color = settings.highlightModeratorColor;
+                    color = that.settings.highlightModeratorColor;
                     break;
                 case 'A':
-                    color = settings.highlightAdminColor;
+                    color = that.settings.highlightAdminColor;
                     break;
             }
             jQuery(this).css('color', color);
@@ -684,10 +704,10 @@ function highlightModAdminForumDisplay() {
                 var color;
                 switch (modList[userid].mod) {
                     case 'M':
-                        color = settings.highlightModeratorColor;
+                        color = that.settings.highlightModeratorColor;
                         break;
                     case 'A':
-                        color = settings.highlightAdminColor;
+                        color = that.settings.highlightAdminColor;
                         break;
                 }
                 jQuery(this).css('color', color);
@@ -696,46 +716,50 @@ function highlightModAdminForumDisplay() {
             }
         }
     });
-}
+};
 
 /**
  * Highlight the posts by moderators and admins
  * on the thread display page
  */
-function highlightModAdminShowThread() {
-    if (settings.highlightModAdminUsername != "true") {
+SALR.prototype.highlightModAdminShowThread = function() {
+    var that = this;
+
+    if (!this.settings.highlightModAdminUsername == 'true') {
         jQuery('table.post:has(dt.author:has(img[title="Moderator"])) td').each(function () {
             jQuery(this).css({
                 'border-collapse' : 'collapse',
-                'background-color' : settings.highlightModeratorColor
+                'background-color' : that.settings.highlightModeratorColor
             });
         });
         jQuery('table.post:has(dt.author:has(img[title="Admin"])) td').each(function () {
             jQuery(this).css({
                 'border-collapse' : 'collapse',
-                'background-color' : settings.highlightAdminColor
+                'background-color' : that.settings.highlightAdminColor
             });
         });
     } else {
         jQuery('dt.author > img[title="Moderator"]').each(function() {
-            jQuery(this).parent().css('color', settings.highlightModeratorColor);
+            jQuery(this).parent().css('color', that.settings.highlightModeratorColor);
         });
 
         jQuery('dt.author > img[title="Admin"]').each(function() {
-            jQuery(this).parent().css('color', settings.highlightAdminColor);
+            jQuery(this).parent().css('color', that.settings.highlightAdminColor);
         });
     }
-}
+};
 
 /**
  * Highlight the posts by moderators and admins
  * on the who posted page
  */
-function highlightModAdminWhoPosted() {
-    if (settings.modList == null)
+SALR.prototype.highlightModAdminWhoPosted = function() {
+    var that = this;
+
+    if (this.settings.modList == null)
         return;
 
-    var modList = JSON.parse(settings.modList);
+    var modList = JSON.parse(this.settings.modList);
 
     jQuery('a[href*=member.php]').each(function() {
         var userid = jQuery(this).attr('href').split('userid=')[1];
@@ -743,27 +767,27 @@ function highlightModAdminWhoPosted() {
             var color;
             switch (modList[userid].mod) {
                 case 'M':
-                    color = settings.highlightModeratorColor;
+                    color = that.settings.highlightModeratorColor;
                     break;
                 case 'A':
-                    color = settings.highlightAdminColor;
+                    color = that.settings.highlightAdminColor;
                     break;
             }
             jQuery(this).css('color', color);
             jQuery(this).css('font-weight', 'bold');
         }
     });
-}
+};
 
 /**
  * Update the list of forums.
  */
-function updateForumsList() {
+SALR.prototype.updateForumsList = function() {
     var forums = new Array();
 
     var stickyList = new Array();
-    if (settings.forumsList != null) {
-        var oldForums = JSON.parse(settings.forumsList);
+    if (this.settings.forumsList != null) {
+        var oldForums = JSON.parse(this.settings.forumsList);
         for(i in oldForums) {
             stickyList[oldForums[i].id] = oldForums[i].sticky;
         }
@@ -783,41 +807,42 @@ function updateForumsList() {
     });
 
     if (forums.length > 0) {
-        port.postMessage({ 'message': 'ChangeSetting',
+        postMessage({ 'message': 'ChangeSetting',
                            'option' : 'forumsList',
                            'value'  : JSON.stringify(forums) });
     }
-}
+};
 
 /**
  * Fetches the username of the current user from the user CP
  */
-function updateUsernameFromCP() {
+SALR.prototype.updateUsernameFromCP = function() {
     var titleText = jQuery('title').text();
     var username = titleText.match(/- User Control Panel For (.+)/)[1];
-    if (settings.username != username) {
-        port.postMessage({ 'message' : 'ChangeSetting',
+    if (this.settings.username != username) {
+        postMessage({ 'message' : 'ChangeSetting',
                            'option'  : 'username',
                            'value'   : username });
     }
-}
+};
 
 /**
  * Displays notes under usernames.
  */
-function displayUserNotes() {
+SALR.prototype.displayUserNotes = function() {
     var notes;
-    if (settings.userNotes == null) {
+
+    if (this.settings.userNotes == null) {
         notes = { "50339" : {'text' : 'SALR Developer', 'color' : '#9933FF'},   // Sebbe
                   "3882420" : {'text' : 'SALR Developer', 'color' : '#9933FF'}, // Onoj
                   "143511" : {'text' : 'SALR Developer', 'color' : '#9933FF'},  // Sneaking Mission
                   "156041" : {'text' : 'SALR Developer', 'color' : '#9933FF'},  // wmbest2
                   "115838" : {'text' : 'SALR Developer', 'color' : '#9933FF'}}; // Ferg
-        port.postMessage({ 'message': 'ChangeSetting',
+        postMessage({ 'message': 'ChangeSetting',
                            'option' : 'userNotes',
                            'value'  : JSON.stringify(notes) });
     } else {
-        notes = JSON.parse(settings.userNotes);
+        notes = JSON.parse(this.settings.userNotes);
     }
 
     jQuery('body').append("<div id='salr-usernotes-config' title='Set note' style='display: none'>"+
@@ -848,14 +873,16 @@ function displayUserNotes() {
                     "OK" : function () {
                         notes[userid] = {'text' : jQuery('#salr-usernotes-text').val(), 
                                          'color' : jQuery('#salr-usernotes-color').val()};
-                        port.postMessage({ 'message': 'ChangeSetting',
+                        // TODO: Fix this
+                        postMessage({ 'message': 'ChangeSetting',
                                            'option' : 'userNotes',
                                            'value'  : JSON.stringify(notes) });
                         jQuery(this).dialog('destroy');
                     },
                     "Delete" : function () {
                         delete notes[userid];
-                        port.postMessage({ 'message': 'ChangeSetting',
+                        // TODO: Fix this
+                        postMessage({ 'message': 'ChangeSetting',
                                            'option' : 'userNotes',
                                            'value'  : JSON.stringify(notes) });
                         jQuery(this).dialog('destroy');                    
@@ -866,12 +893,12 @@ function displayUserNotes() {
         // append a space to create a new text node which fixes spacing problems you'll get otherwise
         jQuery('ul.profilelinks', this).append(' ').append(editLink).append(' '); 
     });
-}
+};
 
 /**
  * Add boxes around blockquotes
  */
-function boxQuotes() {
+SALR.prototype.boxQuotes = function() {
     // CSS taken from http://forums.somethingawful.com/showthread.php?threadid=3208437&userid=0&perpage=40&pagenumber=3#post371892272
     jQuery('.bbc-block').css({
         'background-color': 'white',
@@ -889,58 +916,45 @@ function boxQuotes() {
     jQuery('.bbc-block blockquote').css({
         'padding': '7px 7px 7px 7px'
     });
-}
+};
 
 /**
  * Highlight the user's username in posts
  */
-function highlightOwnUsername() {
-    var selector = 'td.postbody:contains("'+settings.username+'")';
-    var re = new RegExp(settings.username, 'g');
+SALR.prototype.highlightOwnUsername = function() {
+    var that = this;
+
+    var selector = 'td.postbody:contains("'+this.settings.username+'")';
+    var re = new RegExp(this.settings.username, 'g');
     jQuery(selector).each(function() {
-        jQuery(this).html(jQuery(this).html().replace(re, '<span class="usernameHighlight" style="font-weight: bold; color: ' + settings.usernameHighlight + ';">' + settings.username + '</span>'));
+        jQuery(this).html(jQuery(this).html().replace(re, '<span class="usernameHighlight" style="font-weight: bold; color: ' + that.settings.usernameHighlight + ';">' + that.settings.username + '</span>'));
     });
-}
+};
 
 /**
  * Highlight the quotes of the user themselves.
  */
-function highlightOwnQuotes() {
-    jQuery('.bbc-block h4:contains(' + settings.username + ')').each(function() {
-        jQuery(this).parent().css("background-color", settings.userQuote);
+SALR.prototype.highlightOwnQuotes = function() {
+    var that = this;
+
+    jQuery('.bbc-block h4:contains(' + that.settings.username + ')').each(function() {
+        jQuery(this).parent().css("background-color", that.settings.userQuote);
 
         // Replace the styling from username highlighting
-        var that = jQuery(this);
-        jQuery('.usernameHighlight', that).each(function() {
+        var previous = jQuery(this);
+        jQuery('.usernameHighlight', previous).each(function() {
             jQuery(this).css('color', '#555');
         });
     });
-}
-
-/**
- * Returns the current thread ID
- *
- */
-function findThreadID() {
-    // Substrings out everything after the domain, then splits on the ?,
-    // defaults to the argument list (right), splits on the &, looks at the first
-    // parameter in the list, and splits on the = to get the result
-    var parameterList = ((window.location.href).substr(33).split('?')[1]).split('&');
-
-    for (var parameter in parameterList) {
-        var currentParam = (parameterList[parameter]).split('=');
-
-        if (currentParam[0] == 'threadid') {
-            return currentParam[1]; 
-        }
-    }
-}
+};
 
 /**
  * Binds quick-reply box to reply/quote buttons
  *
  */
-function bindQuickReply() {
+SALR.prototype.bindQuickReply = function() {
+    var that = this;
+
     jQuery('a > img[alt="Quote"]').each(function() {
         jQuery(this).parent().attr('href', 'javascript:;');
 
@@ -953,14 +967,14 @@ function bindQuickReply() {
 
         // Bind the quick reply box to the button
         jQuery(this).parent().click(function() {
-            quickReply.appendQuote(username, quote);
-            quickReply.show();
+            that.quickReply.appendQuote(username, quote);
+            that.quickReply.show();
 
             /***********TODO: FIX THIS*********
-            if (!quickReply.isExpanded()) {
-                quickReply.toggleView();
+            if (!this.quickReply.isExpanded()) {
+                this.quickReply.toggleView();
             } else {
-                quickReply.show();
+                this.quickReply.show();
             }
             **********************************/
         });
@@ -970,42 +984,43 @@ function bindQuickReply() {
         jQuery(this).parent().attr('href', 'javascript:void();');
 
         jQuery(this).parent().click(function() {
-            quickReply.show();
+            that.quickReply.show();
         });
     });
-}
+};
 
-function findFormKey() {
+SALR.prototype.findFormKey = function() {
+    var that = this;
+
     jQuery('input[name="formkey"]').each(function() {
-        port.postMessage({ 'message': 'ChangeSetting',
+        postMessage({ 'message': 'ChangeSetting',
                            'option' : 'forumPostKey',
                            'value'  : jQuery(this).attr('value') });
     });
-}
+};
 
 /**
  *  Displays a warning if the last poster in the thread was the current user, or
  *  the post contains a quote of the current user.
  **/
-function quoteNotEditProtection() {
-    if(settings.username){
-        if(jQuery("textarea[name='message']:contains('quote=\"" + settings.username + "\"')").length > 0 ||
-            jQuery('table.post:first tr > td.userinfo > dl > dt.author:contains("' + settings.username + '")').length > 0)
+SALR.prototype.quoteNotEditProtection = function() {
+    if(this.settings.username){
+        if(jQuery("textarea[name='message']:contains('quote=\"" + this.settings.username + "\"')").length > 0 ||
+            jQuery('table.post:first tr > td.userinfo > dl > dt.author:contains("' + this.settings.username + '")').length > 0)
         {
             jQuery("#main_full").after("<div class='qne_warn'><h4>Warning! Possible Quote/Edit mixup.</h4></div>");
         }
     }
-    
-}
+};
 
 /**
  *  Hide signatures
  **/
-function hideSignatures() {
+SALR.prototype.hideSignatures = function() {
     jQuery('p.signature').each(function() {
         jQuery(this).css('display','none');
     });
-}
+};
 
 /**
  *
@@ -1015,7 +1030,7 @@ function hideSignatures() {
  *
  *  @author Scott Lyons (Captain Capacitor)
  **/
-function threadNotes() {
+SALR.prototype.threadNotes = function() {
     //  Only valid on thread pages
     if(findCurrentPage() == 'forumdisplay.php')
         return;
@@ -1025,17 +1040,17 @@ function threadNotes() {
     jQuery('#container').data('showThreadNotes', true);
     
     var notes;
-    if(settings.threadNotes == null)
+    if(this.settings.threadNotes == null)
     {
        	notes = new Object();
-       	port.postMessage({
+       	postMessage({
 			'message': 'ChangeSetting',
 			'option': 'threadNotes',
 			'value': JSON.stringify(notes)
 		});
     }
     else {
-    	notes = JSON.parse(settings.threadNotes);
+    	notes = JSON.parse(this.settings.threadNotes);
     }
     var basePageID = findForumID();
     var hasNote = notes[String(basePageID)] != null;
@@ -1064,7 +1079,7 @@ function threadNotes() {
     		buttons: {
     			"Save" : function() {
     				notes[String(basePageID)] = jQuery('#salr-threadnotes-text').val();
-    				port.postMessage({ 'message': 'ChangeSetting',
+    				postMessage({ 'message': 'ChangeSetting',
                                        'option' : 'threadNotes',
                                        'value'  : JSON.stringify(notes) });
     				
@@ -1074,7 +1089,8 @@ function threadNotes() {
  				},
     			"Delete": function() { 
     				delete notes[String(basePageID)];
-    				port.postMessage({ 'message': 'ChangeSetting',
+                    // TODO: Fix this
+    				postMessage({ 'message': 'ChangeSetting',
                                        'option' : 'threadNotes',
                                        'value'  : JSON.stringify(notes) });
     				hasNote = false;
@@ -1088,14 +1104,14 @@ function threadNotes() {
     		}
     	});
     });
-}
+};
 
 /**
  *
  *  Add search bar to threads
  *
  **/
-function addSearchThreadForm() {
+SALR.prototype.addSearchThreadForm = function() {
     //  Only valid on thread pages
     if(findCurrentPage() != 'showthread.php')
         return;
@@ -1147,4 +1163,4 @@ function addSearchThreadForm() {
         // Append threadid to search string
         keywords.val(keywords.val()+' threadid:'+threadid);
     });
-}
+};
