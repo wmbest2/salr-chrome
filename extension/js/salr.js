@@ -135,6 +135,7 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
 
             break;
         case 'usercp.php':
+        case 'usercp.php#':
             this.updateUsernameFromCP();
             this.updateFriendsList();
 
@@ -144,6 +145,10 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
 
             if (this.settings.highlightModAdmin == 'true') {
                 this.highlightModAdminPosts();
+            }
+
+            if (this.settings.showEditBookmarks == 'true') {
+                jQuery('#bookmark_edit_attach').click();
             }
 
             break;
