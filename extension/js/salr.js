@@ -121,6 +121,10 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
                 this.addSearchThreadForm();
             }
 
+            if (this.settings.highlightCancer == 'true') {
+                this.highlightCancerPosts();
+            }
+
             this.renderWhoPostedInThreadLink();
 
             break;
@@ -1191,4 +1195,18 @@ SALR.prototype.addRapSheetToProfile = function() {
     jQuery('a',el).text('Rap Sheet');
     link.parent().append(' ');
     link.parent().append(el);
+}
+
+/**
+ * Highlight forums cancer posts with a light gray and set opacity to
+ * 1.0
+ *
+ */
+SALR.prototype.highlightCancerPosts = function() {
+    jQuery('.cancerous').each(function() {
+        jQuery(this).css({
+            'background-color': '#98afc7',
+            'opacity': '1.0'
+        });
+    });
 }
