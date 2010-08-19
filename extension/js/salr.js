@@ -106,6 +106,11 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
 
             this.displaySinglePostLink();
 
+            // Display Rap Sheet link on single post view
+            if (window.location.href.indexOf('showpost') >= 0) {
+                this.displayRapSheetLink();
+            }
+
             if (this.settings.enableQuickReply == 'true') {
                 if (this.settings.forumPostKey) {
                     this.quickReply = new QuickReplyBox(this.settings.forumPostKey, this.base_image_uri, this.settings.quickReplyBookmark == 'true');
@@ -538,6 +543,27 @@ SALR.prototype.displaySinglePostLink = function() {
         jQuery('a[href^=#post]', this).before('<a href="http://forums.somethingawful.com/showthread.php?action=showpost&postid='+getPostID(jQuery(this))+'">1</a> ');
     });
 };
+
+ /**
+ * Display Rap Sheet link under a users post
+ *
+ *
+ */
+SALR.prototype.displayRapSheetLink = function() {
+    var that = this;
+    
+    var getUserID = function(element) {
+        var queryString = jQuery('li:first > a', element).attr('href');
+
+        // Holy hardcore string manipulation, Batman!
+        return (queryString.split('&')[1]).split('=')[1];
+    };
+
+    jQuery('ul.profilelinks').each(function() {
+        jQuery(this).append('<li><a href="http://forums.somethingawful.com/banlist.php?userid=' + getUserID(jQuery(this)) + '">Rap Sheet</a></li>');
+    });
+}
+
 
 /**
  * Open the list of who posted in a thread
