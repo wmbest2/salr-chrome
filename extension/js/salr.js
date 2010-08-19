@@ -189,7 +189,9 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
 
             break;
         case 'member.php':
-            this.addRapSheetToProfile();
+            if (window.location.href.indexOf('action=getinfo') >= 0) {
+                this.addRapSheetToProfile();
+            }
 
             break;
     }
