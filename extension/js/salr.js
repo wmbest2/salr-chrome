@@ -132,6 +132,17 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
 
             this.renderWhoPostedInThreadLink();
 
+            if (this.settings.adjustAfterLoad == 'true') {
+                window.onload = function() {
+                    var href = window.location.href;
+                    if (href.indexOf('#pti') >= 0 || href.indexOf('#post') >= 0) {
+                        var first = findFirstUnreadPost();
+                        var post = jQuery('div#thread > table.post').eq(first);
+                        jQuery(window).scrollTop(post.offset().top);
+                    }
+                };
+            }
+
             break;
         case 'newreply.php':
             if (!this.settings.forumPostKey) {
