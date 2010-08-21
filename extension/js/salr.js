@@ -1242,7 +1242,6 @@ SALR.prototype.addRapSheetToProfile = function() {
 SALR.prototype.highlightCancerPosts = function() {
     jQuery('.cancerous').each(function() {
         jQuery(this).css({
-            'background-color': '#98afc7',
             'opacity': '1.0'
         });
     });
