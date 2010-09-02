@@ -32,11 +32,13 @@ function QuickReplyBox(forum_post_key, base_image_uri, bookmark) {
     this.forum_post_key = forum_post_key;
     this.base_image_uri = base_image_uri;
     this.bookmark = bookmark;
+    this.reply_url = 'http://forums.somethingawful.com/newreply.php';
 
     this.quickReplyState = {
         expanded: false,
         visible: false,
-        sidebar_visible: false
+        sidebar_visible: false,
+        topbar_visible: false
     };
 
     // TODO: Pull these from the extension, cache them there
@@ -77,6 +79,10 @@ QuickReplyBox.prototype.create = function(username, quote) {
                 '   <div id="sidebar-list">' +
                 '   </div>' +
                 '</div>' +
+                '<div id="top-bar">' +
+                '   <div id="topbar-preview">' +
+                '   </div>' +
+                '</div>' + 
                 '<div id="quick-reply"> ' + 
                 '   <form enctype="multipart/form-data" action="newreply.php" name="vbform" method="POST" onsubmit="return validate(this)">' +
                 '       <input type="hidden" name="action" value="postreply">' + 
@@ -124,6 +130,11 @@ QuickReplyBox.prototype.create = function(username, quote) {
                 '           <label>' +
                 '           <input type="checkbox" name="signature" value="yes">' + 
                 '               <span class="post-options">Show signature</span>' +
+                '          </input>' + 
+                '           </label>' + 
+                '           <label>' +
+                '           <input type="checkbox" id="live-preview" value="yes">' + 
+                '               <span class="post-options">Show live preview</span>' +
                 '          </input>' + 
                 '           </label>' + 
                 '       </div>' +
@@ -177,6 +188,10 @@ QuickReplyBox.prototype.create = function(username, quote) {
         });
     });
 
+    jQuery('#live-preview').change(function() {
+        that.toggleTopbar();
+    });
+
     jQuery('div.sidebar-menu-item').live('click', function() {
         var selected_item = jQuery('div.menu-item-code', this).first().html();
 
@@ -215,6 +230,8 @@ QuickReplyBox.prototype.show = function() {
 
 QuickReplyBox.prototype.hide = function() {
     jQuery('#side-bar').first().hide();
+    jQuery('#top-bar').first().hide();
+    jQuery('#live-preview').attr('checked', '');
     if (salr_client.pageNavigator) {
         salr_client.pageNavigator.display();
     }
@@ -231,7 +248,7 @@ QuickReplyBox.prototype.fetchFormCookie = function(threadid) {
         return jQuery('input[name="form_cookie"]', html).val();
     };
 
-    jQuery.get('http://forums.somethingawful.com/newreply.php',
+    jQuery.get(this.reply_url,
                {
                    action: 'newreply',
                    threadid: threadid
@@ -245,102 +262,29 @@ QuickReplyBox.prototype.appendText = function(text) {
     var current_message = jQuery('#post-message').val();
 
     jQuery('#post-message').val(current_message + text);
+
+    var parser = new PreviewParser(jQuery('#post-message').val(), this.emotes);
+    jQuery('#topbar-preview').html(parser.fetchResult());
 };
 
-QuickReplyBox.prototype.appendQuote = function(username, quote) {
-
-    username = username || false;
-    quote = this.parseQuote(quote) || false;
-
-    var quote_string = '';
-
-    if (username && quote) {
-        re = RegExp(/\<.*\> &nbsp;/);
-        username = username.replace(re, '');
-        var current_message = jQuery('#post-message').val();
-
-        quote_string += '[quote="' + username + '"]\n' + jQuery.trim(quote) + '\n[/quote]\n\n';
-
-        jQuery('#post-message').val(current_message + quote_string);
-    }
-};
-
-/********Add all quote parsers here*************/
-QuickReplyBox.prototype.parseQuote = function(quote_string) {
-    var result = quote_string;
+QuickReplyBox.prototype.appendQuote = function(postid) {
     var that = this;
 
-    // Remove any quote blocks within the quote
-    jQuery('div.bbc-block', result).each(function() {
-        jQuery(this).remove();
-    });
-
-    // Remove signatures
-    jQuery('p.signature', result).each(function() {
-        jQuery(this).remove();
-    });
-
-    // Remove any "Edited by" messages
-    jQuery('p.editedby', result).each(function() {
-        jQuery(this).remove();
-    });
-
-    jQuery('img', result).each(function() {
-        var emoticon = that.parseSmilies(jQuery(this).attr('title'));
-
-        if (emoticon) {
-            jQuery(this).replaceWith(emoticon);
-        } else {
-            var image_path = jQuery(this).attr('src');
-            var match = image_path.match(/^attachment\.php\?postid=(\d+)$/);
-            if (match)
-                image_path = 'http://forums.somethingawful.com/'+image_path;
-            jQuery(this).replaceWith('[timg]' + image_path + '[/timg]');
-        }
-    });
-
-    jQuery('a', result).each(function() {
-        var label = jQuery(this).html();
-        var url = jQuery(this).attr('href');
-
-        if (label == '') {
-            jQuery(this).replaceWith('[url]' + url + '[/url]');
-        } else {
-            jQuery(this).replaceWith('[url=' + url + ']' + label + '[/url]');
-        }
-    });
-
-    return this.escapeHtml(result.text());
+    // Call up SA's quote page
+    jQuery.get(this.reply_url,
+                {
+                    action: 'newreply',
+                    postid: postid
+                },
+                function(response) {
+                    // Pull quoted text from reply box
+                    var textarea = jQuery(response).find('textarea[name=message]')
+                    var quote = '';
+                    if (textarea.length)
+                        quote = textarea.val();
+                    that.appendText(quote);
+                });
 };
-
-QuickReplyBox.prototype.parseSmilies = function(quote_string) {
-    var result = false;
-    var end_index = quote_string.length - 1;
-
-    var smilies = {
-        ':(': '',
-        ':)': '',
-        ':D': '',
-        ';)': '',
-        ';-*': '',
-    };
-
-    if (quote_string[0] == ':' && quote_string[end_index] == ':') {
-        result = quote_string;
-    } else if (quote_string in smilies) {
-        result = quote_string;
-    }
-
-    return result;
-};
-
-QuickReplyBox.prototype.escapeHtml = function(html) {
-    return html.
-        replace(/&/gmi, '&amp;').
-        replace(/"/gmi, '&quot;').
-        replace(/>/gmi, '&gt;').
-        replace(/</gmi, '&lt;')
-}
 
 QuickReplyBox.prototype.toggleView = function() {
 
@@ -353,20 +297,27 @@ QuickReplyBox.prototype.toggleView = function() {
     if(this.quickReplyState.expanded) {
         var hideBox = function() {
             jQuery('#side-bar').first().hide();
+            jQuery('#top-bar').first().hide();
+            jQuery('#live-preview').attr('checked', '');
             quick_reply_box.animate( { height: min } );
             (imgId).attr("src", that.base_image_uri + "quick-reply-rollup.gif");
             that.quickReplyState.expanded = false;
         };
 
-        // If the sidebar is open when we're trying to rolldown the box, animate
-        // the sidebar as we tuck it away
+        // Keep trying to close the sidebar until we're ready
         if(this.quickReplyState.sidebar_visible) {
             jQuery('#side-bar').animate( { left: '-=200px' }, 500, function() {
                 that.quickReplyState.sidebar_visible = null;
                 if (salr_client.pageNavigator) {
                     salr_client.pageNavigator.display();
                 }
-                hideBox();
+
+                that.toggleView();
+            });
+        } else if (this.quickReplyState.topbar_visible) {
+            jQuery('#top-bar').animate( { bottom: '-=320px' }, 500, function() {
+                that.quickReplyState.topbar_visible = false;
+                that.toggleView();
             });
         } else {
             hideBox();
@@ -436,8 +387,33 @@ QuickReplyBox.prototype.toggleSidebar = function(element) {
 
 };
 
+QuickReplyBox.prototype.toggleTopbar = function() {
+    top_bar = jQuery('#top-bar');
+
+    if (!top_bar.is(':visible')) {
+        top_bar.css('display', 'block');
+    }
+    
+    if (this.quickReplyState.topbar_visible) {
+        top_bar.animate( { bottom: '-=320px' } );
+        if (salr_client.pageNavigator) {
+            salr_client.pageNavigator.display();
+        }
+        this.quickReplyState.topbar_visible = false;
+    } else {
+        top_bar.animate( { bottom: '+=320px' } );
+        this.quickReplyState.topbar_visible = true;
+    }
+};
+
 QuickReplyBox.prototype.notify = function(emotes) {
+    var that = this;
     this.emotes = emotes;
+
+    jQuery('#post-message').keyup(function() {
+        var parser = new PreviewParser(jQuery(this).val(), emotes);
+        jQuery('#topbar-preview').html(parser.fetchResult());
+    });
 
     this.setEmoteSidebar();
 };

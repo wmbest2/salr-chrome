@@ -83,13 +83,13 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
                 this.highlightOwnPosts();
             }
 
+            if (this.settings.enableUserNotes == 'true') {
+                this.displayUserNotes();
+            }
+
             if (this.settings.highlightModAdmin == 'true') {
                 this.skimModerators();
                 this.highlightModAdminPosts();
-            }
-
-            if (this.settings.enableUserNotes == 'true') {
-                this.displayUserNotes();
             }
 
             if (this.settings.boxQuotes == 'true') {
@@ -126,8 +126,8 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
                 this.addSearchThreadForm();
             }
 
-            if (this.settings.highlightCancer == 'true') {
-                this.highlightCancerPosts();
+            if (this.settings.fixCancer == 'true') {
+                this.fixCancerPosts();
             }
 
             this.renderWhoPostedInThreadLink();
@@ -230,8 +230,9 @@ SALR.prototype.updateStyling = function() {
     jQuery('tr.thread').each(function() {
         var thread = jQuery(this);
         var newPosts = false;
+        var seenThread = false;
 
-        if (!that.settings.disableCustomButtons || that.settings.disableCustomButtons == 'false') {
+        if (that.settings.displayCustomButtons == 'true') {
 
             // Re-style the new post count link
             jQuery('a.count', thread).each(function() {
@@ -287,6 +288,8 @@ SALR.prototype.updateStyling = function() {
             jQuery('a.x', thread).each(function() {
                 var other = that;
 
+                seenThread = true;
+
                 // Set the image styles
                 jQuery(this).css("background", "none");
                 jQuery(this).css("background-image", "url('" + other.base_image_uri + "unvisit.png')");
@@ -306,11 +309,15 @@ SALR.prototype.updateStyling = function() {
         } else {
             if (jQuery('a.count', thread).length)
                 newPosts = true;
+            if (jQuery('a.x', thread).length)
+                seenThread = true;
         }
 
-        // If thread coloring enabled in forum preferences
-        // recolor according to SALR settings
-        if (thread.attr('class') == 'thread seen') {
+        // Use custom highlighting if:
+        //   highlightThread setting is enabled
+        //   this thread has unread posts
+        //   bookmark coloring forums option is disabled
+        if (that.settings.highlightThread=='true' && seenThread && (thread.attr('class') == 'thread seen' || thread.attr('class')=='thread')) {
             // If the thread has new posts, display the green shade,
             // otherwise show the blue shade
             var darkShade = (newPosts) ? that.settings.darkNewReplies : that.settings.darkRead;
@@ -345,7 +352,11 @@ SALR.prototype.updateStyling = function() {
 
 	
 	if(this.settings.displayConfigureSalr == 'true') {
-		jQuery('#navigation li.first').next('li').next('li').after(" - <a id='configure' href='#'>Configure SALR</a>");
+        if ( this.settings.showNavigation == 'true' ) {
+            jQuery('#navigation li.first').next('li').next('li').after("- <li><a id='configure' href='#'>Configure SALR</a></li>");
+        } else {
+            jQuery('#container').before("<div style='padding: 3px; text-align: center; font-size: 10px;'><a id='configure' href='#'>Configure SALR</a></div>");
+        }
 	}
 	
 	jQuery('#configure').click(function() {
@@ -358,12 +369,153 @@ SALR.prototype.updateStyling = function() {
             jQuery(this).html('');
             jQuery(this).css('height', '0px');
         });
-
-        jQuery('ul#nav_purchase').each(function() {
-            jQuery(this).html('');
-            jQuery(this).css('height', '0px');
-        });
     }
+	
+	// Hide each top row of links
+	if (this.settings.showPurchases == 'false') {
+		jQuery('#nav_purchase').each(function() {
+			jQuery(this).remove();
+		});
+	}
+    
+	if (this.settings.showNavigation == 'false') {
+		jQuery('#navigation').each(function() {
+			jQuery(this).remove();
+		});
+	}
+	
+	// Hide individual top menu items
+	if (this.settings.topPurchaseAcc == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=register'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchasePlat == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=platinum'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+	
+	if (this.settings.topPurchaseAva == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=custom_title'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchaseOtherAva == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=others_custom_title'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchaseArchives == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=archive'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+		if (this.settings.topPurchaseNoAds == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=noads'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchaseNewUsername == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=rename'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchaseNonProfAd == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=banner_ad_internal'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchaseForProfAd == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=banner_ad'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchaseEmoticon == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=smilie'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchaseSticky == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=sticky'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPurchaseGiftCert == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=gift_cert'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topSAForums == 'false') {
+		jQuery("#navigation li:has(a[href='/index.php'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topSearch == 'false') {
+		jQuery("#navigation li:has(a[href='/f/search'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topUserCP == 'false') {
+		jQuery("#navigation li:has(a[href='usercp.php'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topPrivMsgs == 'false') {
+		jQuery("#navigation li:has(a[href='/private.php'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topForumRules == 'false') {
+		jQuery("#navigation li:has(a[href='http://www.somethingawful.com/d/forum-rules/forum-rules.php'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topSaclopedia == 'false') {
+		jQuery("#navigation li:has(a[href='/dictionary.php'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topGloryhole == 'false') {
+		jQuery("#navigation li:has(a[href='/stats.php'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topLepersColony == 'false') {
+		jQuery("#navigation li:has(a[href='/banlist.php'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topSupport == 'false') {
+		jQuery("#navigation li:has(a[href='/supportmail.php'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
+
+	if (this.settings.topLogout == 'false') {
+		jQuery("#navigation li:has(a[href='/account.php?s=&action=logout&ma=0339831a'])").each(function() {
+			jQuery(this).remove();
+		});
+	}
 
     // Hide the advertisements
     if (this.settings.hideAdvertisements == 'true') {
@@ -622,7 +774,7 @@ SALR.prototype.renderOpenUpdatedThreadsButton = function() {
             jQuery('tr.thread').each( function() {
                 var img_split = jQuery('td.star > img', this).attr('src').split('/');
                 var img_name = img_split[img_split.length-1];
-                if (other.settings.ignore_bookmark_star != img_name) {
+                if (other.settings.ignoreBookmarkStar != img_name) {
                     if (jQuery('a[class*=count]', this).length > 0) {
                         var href = jQuery('a[class*=count]', this).attr('href');
                         // TODO: Fix this
@@ -690,6 +842,11 @@ SALR.prototype.highlightOPPosts = function() {
             'border-collapse' : 'collapse',
             'background-color' : that.settings.highlightOPColor
         });
+    });
+    jQuery('dt.author.op').each(function() {
+        jQuery(this).after(
+            '<dd style="color: #07A; font-weight: bold; ">Thread Poster</dd>'
+        );
     });
 };
 
@@ -787,25 +944,37 @@ SALR.prototype.highlightModAdminShowThread = function() {
     var that = this;
 
     if (this.settings.highlightModAdminUsername != 'true') {
-        jQuery('table.post:has(dt.author:has(img[title="Moderator"])) td').each(function () {
+        jQuery('table.post:has(dt.role-mod) td').each(function () {
             jQuery(this).css({
                 'border-collapse' : 'collapse',
                 'background-color' : that.settings.highlightModeratorColor
             });
+            jQuery('dt.author', this).after(
+                '<dd style="font-weight: bold; ">Forum Moderator</dd>'
+            );
         });
-        jQuery('table.post:has(dt.author:has(img[title="Admin"])) td').each(function () {
+        jQuery('table.post:has(dt.role-admin) td').each(function () {
             jQuery(this).css({
                 'border-collapse' : 'collapse',
                 'background-color' : that.settings.highlightAdminColor
             });
+            jQuery('dt.author', this).after(
+                '<dd style="font-weight: bold; ">Forum Moderator</dd>'
+            );
         });
     } else {
-        jQuery('dt.author > img[title="Moderator"]').each(function() {
-            jQuery(this).parent().css('color', that.settings.highlightModeratorColor);
+        jQuery('dt.role-mod').each(function() {
+            jQuery(this).css('color', that.settings.highlightModeratorColor);
+            jQuery(this).after(
+                '<dd style="font-weight: bold; color: ' + that.settings.highlightModeratorColor+ '">Forum Moderator</dd>'
+            );
         });
 
-        jQuery('dt.author > img[title="Admin"]').each(function() {
-            jQuery(this).parent().css('color', that.settings.highlightAdminColor);
+        jQuery('dt.role-admin').each(function() {
+            jQuery(this).css('color', that.settings.highlightAdminColor);
+            jQuery(this).after(
+                '<dd style="font-weight: bold; color: ' + that.settings.highlightAdminColor+ '">Forum Administrator</dd>'
+            );
         });
     }
 };
@@ -898,7 +1067,9 @@ SALR.prototype.displayUserNotes = function() {
                   "3882420" : {'text' : 'SALR Developer', 'color' : '#9933FF'}, // Onoj
                   "143511" : {'text' : 'SALR Developer', 'color' : '#9933FF'},  // Sneaking Mission
                   "156041" : {'text' : 'SALR Developer', 'color' : '#9933FF'},  // wmbest2
-                  "115838" : {'text' : 'SALR Developer', 'color' : '#9933FF'}}; // Ferg
+                  "115838" : {'text' : 'SALR Developer', 'color' : '#9933FF'}, // Ferg
+                  "101547" : {'text' : 'SALR Developer', 'color' : '#9933FF'}, // Rohaq
+                }; 
         postMessage({ 'message': 'ChangeSetting',
                            'option' : 'userNotes',
                            'value'  : JSON.stringify(notes) });
@@ -1019,16 +1190,12 @@ SALR.prototype.bindQuickReply = function() {
     jQuery('a > img[alt="Quote"]').each(function() {
         jQuery(this).parent().attr('href', 'javascript:;');
 
-        var parentTable = jQuery(this).parent().parent().parent().parent().parent().parent().parent();
-
-        // Query for the username
-        var username = jQuery('tr > td.userinfo > dl > dt.author', parentTable).html();
-        // Query for the quote
-        var quote = jQuery('tr > td.postbody', parentTable).clone();
+        var parentTable = jQuery(this).parents('table.post');
+        var postid = parentTable.attr('id').substr(4);
 
         // Bind the quick reply box to the button
         jQuery(this).parent().click(function() {
-            that.quickReply.appendQuote(username, quote);
+            that.quickReply.appendQuote(postid);
             that.quickReply.show();
 
             /***********TODO: FIX THIS*********
@@ -1246,7 +1413,7 @@ SALR.prototype.addRapSheetToProfile = function() {
  * 1.0
  *
  */
-SALR.prototype.highlightCancerPosts = function() {
+SALR.prototype.fixCancerPosts = function() {
     jQuery('.cancerous').each(function() {
         jQuery(this).css({
             'opacity': '1.0'

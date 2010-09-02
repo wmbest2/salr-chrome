@@ -1,6 +1,6 @@
 {
   "name": "Something Awful Last Read", 
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Highlights posts which quote the user", 
   "icons": {
 	  		  "16": "images/logo16.png",
@@ -20,10 +20,12 @@
         "js/jquery/jquery.rightclick.js",
         "js/jquery/jquery.fieldselection.js",
 		"js/jquery/jquery.putCursorAtEnd.1.0.js",
+        "js/bbcode.js",
         "js/util.js",
         "js/hotkey-manager.js",
         "js/mouse-gestures-controller.js",
         "js/quick-reply-emote-parser.js",
+        "js/quick-reply-preview-parser.js",
         "js/quick-reply.js",
         "js/page-navigator.js",
         "js/salr.js",

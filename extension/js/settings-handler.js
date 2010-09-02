@@ -33,25 +33,55 @@ jQuery(document).ready(function() {
         localStorage.setItem('salrInitialized', 'true');
     }
 
-    // If we don't have stored settings, set defaults
-    if (!localStorage.getItem('salrInitialized')) {
-        localStorage.setItem('userQuote', '#a2cd5a');
-        localStorage.setItem('darkRead', '#6699cc');
-        localStorage.setItem('lightRead', '#99ccff');
-        localStorage.setItem('darkNewReplies', '#99cc99');
-        localStorage.setItem('lightNewReplies', '#ccffcc');
-        localStorage.setItem('youtubeHighlight', '#ff00ff');
-        localStorage.setItem('displayConfigureSalr', 'true');
-        localStorage.setItem('highlightFriendsColor', "#f2babb");
-        localStorage.setItem('highlightSelfColor', "#f2babb");
-        localStorage.setItem('highlightAdminColor', "#ff7256");
-        localStorage.setItem('highlightModeratorColor', "#b4eeb4");
-        localStorage.setItem('inlinePostCounts', 'false');
-        localStorage.setItem('disableCustomButtons', 'false');
-        localStorage.setItem('highlightOPColor', '#fff2aa');
-        localStorage.setItem('displayPageNavigator', 'true');
-        localStorage.setItem('userNotesEnabled', 'true');
-        localStorage.setItem('salrInitialized', 'true');
+  // Setting names.
+    var defaultSettings = [];
+    defaultSettings['userQuote']                    = '#a2cd5a';
+    defaultSettings['darkRead']                     = '#6699cc';
+    defaultSettings['lightRead']                    = '#99ccff';
+    defaultSettings['darkNewReplies']               = '#99cc99';
+    defaultSettings['lightNewReplies']              = '#ccffcc';
+    defaultSettings['youtubeHighlight']             = '#ff00ff';
+    defaultSettings['displayConfigureSalr']         = 'true';
+    defaultSettings['highlightFriendsColor']        = '#f2babb';
+    defaultSettings['highlightSelfColor']           = '#f2babb';
+    defaultSettings['highlightAdminColor']          = '#ff7256';
+    defaultSettings['highlightModeratorColor']      = '#b4eeb4';
+    defaultSettings['inlinePostCounts']             = 'false';
+    defaultSettings['displayCustomButtons']         = 'true';
+    defaultSettings['highlightOPColor']             = '#fff2aa';
+    defaultSettings['displayPageNavigator']         = 'true';
+    defaultSettings['userNotesEnabled']             = 'true';
+    defaultSettings['salrInitialized']              = 'true';
+    defaultSettings['topPurchaseAcc']               = 'true';
+    defaultSettings['topPurchasePlat']              = 'true';
+    defaultSettings['topPurchaseAva']               = 'true';
+    defaultSettings['topPurchaseOtherAva']          = 'true';
+    defaultSettings['topPurchaseArchives']          = 'true';
+    defaultSettings['topPurchaseNoAds']             = 'true';
+    defaultSettings['topPurchaseUsername']          = 'true';
+    defaultSettings['topPurchaseNonProfAd']         = 'true';
+    defaultSettings['topPurchaseForProfAd']         = 'true';
+    defaultSettings['topPurchaseEmoticon']          = 'true';
+    defaultSettings['topPurchaseSticky']            = 'true';
+    defaultSettings['topPurchaseGiftCert']          = 'true';
+    defaultSettings['topSAForums']                  = 'true';
+    defaultSettings['topSearch']                    = 'true';
+    defaultSettings['topUserCP']                    = 'true';
+    defaultSettings['topPrivMsgs']                  = 'true';
+    defaultSettings['topForumRules']                = 'true';
+    defaultSettings['topSaclopedia']                = 'true';
+    defaultSettings['topGloryhole']                 = 'true';
+    defaultSettings['topLepersColony']              = 'true';
+    defaultSettings['topSupport']                   = 'true';
+    defaultSettings['topLogout']                    = 'true';
+    defaultSettings['showPurchases']                = 'true';
+    defaultSettings['showNavigation']               = 'true';
+  
+    // Check stored settings, if value not set, set to default value
+    for ( var key in defaultSettings ) {
+        if ( localStorage.getItem(key) == undefined ) {
+            localStorage.setItem(key, defaultSettings[key]);
+        }
     }
 
     // Initialize text entry fields
@@ -71,6 +101,7 @@ jQuery(document).ready(function() {
 
         jQuery(this).change(function() {
             localStorage.setItem(jQuery(this).attr('id'), jQuery(this).val());
+            highlightExamples();
         });
     });
 
@@ -80,6 +111,7 @@ jQuery(document).ready(function() {
 
         jQuery(this).click(function() {
             localStorage.setItem(jQuery(this).attr('id'), jQuery(this).attr('checked'));
+            highlightExamples();
         });
     });
 
@@ -97,8 +129,10 @@ jQuery(document).ready(function() {
             onSubmit: function(hsb, hex, rgb, el) {
 				jQuery(el).val('#' + hex);
 				jQuery(el).ColorPickerHide();
-				jQuery(el).parent().next().children().css('background-color', '#' + hex); //TODO fix this monstrosity.
+                var box = jQuery('#'+jQuery(el).attr('id')+'-box');
+				box.css('background-color', '#' + hex);
                 localStorage.setItem(jQuery(el).attr('id'), jQuery(el).val());
+                highlightExamples();
 			},
 			onBeforeShow: function () { 
 				jQuery(this).ColorPickerSetColor(this.value);
@@ -126,7 +160,197 @@ jQuery(document).ready(function() {
 	}).click(function() {
 		onParentOptionSelect(jQuery(this));
 	});
+
+    highlightExamples();
 });
+
+function highlightExamples() {
+    // Thread highlighting samples
+    jQuery('tr#thread-read td#thread-light').each(function() {
+        if (localStorage.getItem('highlightThread')=='true') {
+            jQuery(this).css({ "background-color" : localStorage.getItem('lightRead'), 
+                               "background-image" : "url('images/gradient.png')",
+                               "background-repeat" : "repeat-x"
+                             });
+        } else {
+            jQuery(this).css({ "background-color" : '', 
+                               "background-image" : '',
+                               "background-repeat" : ''
+                             });
+        }
+    });
+    jQuery('tr#thread-read td#thread-dark').each(function() {
+        if (localStorage.getItem('highlightThread')=='true') {
+            jQuery(this).css({ "background-color" : localStorage.getItem('darkRead'), 
+                               "background-image" : "url('images/gradient.png')",
+                               "background-repeat" : "repeat-x"
+                             });
+        } else {
+            jQuery(this).css({ "background-color" : '', 
+                               "background-image" : '',
+                               "background-repeat" : ''
+                             });
+        }
+    });
+    jQuery('tr#thread-unread td#thread-light').each(function() {
+        if (localStorage.getItem('highlightThread')=='true') {
+            jQuery(this).css({ "background-color" : localStorage.getItem('lightNewReplies'), 
+                               "background-image" : "url('images/gradient.png')",
+                               "background-repeat" : "repeat-x"
+                             });
+        } else {
+            jQuery(this).css({ "background-color" : '', 
+                               "background-image" : '',
+                               "background-repeat" : ''
+                             });
+        }
+    });
+    jQuery('tr#thread-unread td#thread-dark').each(function() {
+        if (localStorage.getItem('highlightThread')=='true') {
+            jQuery(this).css({ "background-color" : localStorage.getItem('darkNewReplies'), 
+                               "background-image" : "url('images/gradient.png')",
+                               "background-repeat" : "repeat-x"
+                             });
+        } else {
+            jQuery(this).css({ "background-color" : '', 
+                               "background-image" : '',
+                               "background-repeat" : ''
+                             });
+        }
+    });
+    jQuery('div#lastseen-forum').each(function() {
+        if (localStorage.getItem('displayCustomButtons')=='true') {
+            jQuery(this).css('display','none');
+        } else {
+            jQuery(this).css('display','');
+        }
+    });
+    jQuery('div#lastseen-custom').each(function() {
+        if (localStorage.getItem('displayCustomButtons')=='true') {
+            jQuery(this).css({
+                'display' : '',
+                'background' : 'none',
+                'border' : 'none'
+            });
+            jQuery('div#lastseen-inline',this).each(function() {
+                if (localStorage.getItem('inlinePostCounts') == 'true') {
+                    jQuery(this).css('display','');
+                } else {
+                    jQuery(this).css('display','none');
+                }
+            });
+            jQuery('a#lastseen-count',this).each(function () {
+                jQuery(this).css({
+                    'border-left' : 'none',
+                    'width' : '7px',
+                    'height' : '16px',
+                    'padding-right' : '11px',
+                    'background-image' : "url('images/lastpost.png')"
+                });
+            });
+            jQuery('a#lastseen-x',this).each(function() {
+                jQuery(this).css({
+                    'background' : 'none',
+                    'background-image' : "url('images/unvisit.png')",
+                    'height' : '16px',
+                    'width' : '14px'
+                });
+            });
+        } else {
+            jQuery(this).css('display','none');
+        }
+    });
+    jQuery('div#lastseen-custom-count').each(function() {
+        if (localStorage.getItem('displayCustomButtons') == 'true' && localStorage.getItem('inlinePostCounts') != 'true') {
+            jQuery(this).css('display', 'inline');
+        } else {
+            jQuery(this).css('display', 'none');
+        }
+    });
+
+    // Post highlighting samples
+    jQuery('div#your-quote').each(function() {
+        if (localStorage.getItem('highlightOwnQuotes')=='true') {
+            jQuery(this).css('background-color', localStorage.getItem('userQuote'));
+        } else {
+            jQuery(this).css('background-color', '');
+        }
+    });
+    jQuery('dt#own-name').each(function() {
+        if (localStorage.getItem('username') != '') {
+            jQuery(this).text(localStorage.getItem('username'));
+        }
+    });
+    jQuery('span#your-name').each(function() {
+        if (localStorage.getItem('username') != '') {
+            jQuery(this).text(localStorage.getItem('username'));
+        }
+        if (localStorage.getItem('highlightOwnUsername')=='true') {
+            jQuery(this).css('color', localStorage.getItem('usernameHighlight'));
+        } else {
+            jQuery(this).css('color', '');
+        }
+    });
+    jQuery('span#your-name-quote').each(function() {
+        if (localStorage.getItem('username') != '') {
+            jQuery(this).text(localStorage.getItem('username'));
+        }
+        if (localStorage.getItem('highlightOwnQuotes')!='true' && localStorage.getItem('highlightOwnUsername')=='true') {
+            jQuery(this).css('color', localStorage.getItem('usernameHighlight'));
+        } else {
+            jQuery(this).css('color', '');
+        }
+    });
+    jQuery('table#own-post td').each(function() {
+        if (localStorage.getItem('highlightSelf')=='true') {
+            jQuery(this).css('background-color', localStorage.getItem('highlightSelfColor'));
+        } else {
+            jQuery(this).css('background-color', '');
+        }
+    });
+    jQuery('table#friend-post td').each(function() {
+        if (localStorage.getItem('highlightFriends')=='true') {
+            jQuery(this).css('background-color', localStorage.getItem('highlightFriendsColor'));
+        } else {
+            jQuery(this).css('background-color', '');
+        }
+    });
+    jQuery('table#op-post td').each(function() {
+        if (localStorage.getItem('highlightOP')=='true') {
+            jQuery(this).css('background-color', localStorage.getItem('highlightOPColor'));
+        } else {
+            jQuery(this).css('background-color', '');
+        }
+    });
+    jQuery('dt#mod-name').each(function() {
+        if (localStorage.getItem('highlightModAdminUsername') == 'true' && localStorage.getItem('highlightModAdmin')=='true') {
+            jQuery(this).css('color', localStorage.getItem('highlightModeratorColor'));
+        } else {
+            jQuery(this).css('color', '');
+        }
+    });
+    jQuery('dt#admin-name').each(function() {
+        if (localStorage.getItem('highlightModAdminUsername') == 'true' && localStorage.getItem('highlightModAdmin')=='true') {
+            jQuery(this).css('color', localStorage.getItem('highlightAdminColor'));
+        } else {
+            jQuery(this).css('color', '');
+        }
+    });
+    jQuery('table#mod-post td').each(function() {
+        if (localStorage.getItem('highlightModAdminUsername') != 'true' && localStorage.getItem('highlightModAdmin')=='true') {
+            jQuery(this).css('background-color', localStorage.getItem('highlightModeratorColor'));
+        } else {
+            jQuery(this).css('background-color', '');
+        }
+    });
+    jQuery('table#admin-post td').each(function() {
+        if (localStorage.getItem('highlightModAdminUsername') != 'true' && localStorage.getItem('highlightModAdmin')=='true') {
+            jQuery(this).css('background-color', localStorage.getItem('highlightAdminColor'));
+        } else {
+            jQuery(this).css('background-color', '');
+        }
+    });
+}
 
 /**
  *
@@ -281,6 +505,8 @@ function configWindow() {
         if (key == 'forumsList')
             continue;
         if (key == 'modList')
+            continue;
+        if (key == 'userNotes')
             continue;
         win.document.write('<tr><td>'+key+'</td>');
         win.document.writeln('<td>'+localStorage[key]+'</td></tr>');

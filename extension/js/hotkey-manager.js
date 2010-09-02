@@ -136,20 +136,15 @@ HotKeyManager.prototype.nextPage = function() {
     switch(findCurrentPage()) {
         case 'forumdisplay.php':
         case 'showthread.php':
-            var currentPage = 1;
-            var url = window.location.href;
-            url = url.replace(/#.*$/, '');
-            var m = url.match(/pagenumber=(\d+)/);
-            if (m) {
-                currentPage = parseInt(m[1]);
-                var nextPage = currentPage+1;
-                url = url.replace(/pagenumber=(\d+)/, 'pagenumber='+nextPage);
-            } else {
-                url = url+'&pagenumber=2';
-            }
+            var currentPage = Number(jQuery('span.curpage').html());
+            if (currentPage <= 0)
+                currentPage = 1;
 
-            if (currentPage < this.pageCount)
-                jumpToPage(url);
+            if (currentPage >= this.pageCount)
+                return;
+
+            jumpToPage(nextPageUrl());
+
     }
 };
 
@@ -161,18 +156,15 @@ HotKeyManager.prototype.previousPage = function() {
     switch(findCurrentPage()) {
         case 'forumdisplay.php':
         case 'showthread.php':
-            var url = window.location.href;
-            url = url.replace(/#.*$/, '');
-            var m = url.match(/pagenumber=(\d+)/);
-            if (!m)
+            var currentPage = Number(jQuery('span.curpage').html());
+            if (currentPage <= 0)
+                currentPage = 1;
+
+            if (currentPage <= 1)
                 return;
 
-            var currentPage = parseInt(m[1]);
-            var nextPage = currentPage-1;
-            url = url.replace(/pagenumber=(\d+)/, 'pagenumber='+nextPage);
+            jumpToPage(prevPageUrl());
 
-            if (currentPage > 1)
-                jumpToPage(url);
     }
 };
 
@@ -294,11 +286,10 @@ HotKeyManager.prototype.quoteCurrentPost = function() {
     }
 
     var current_post = jQuery('div#thread > table.post').eq(this.current_post);
-    var username = jQuery('tr > td.userinfo > dl > dt.author', current_post).html();
-    // Query for the quote
-    var quote = jQuery('tr > td.postbody', current_post).clone();
+    var postid = current_post.attr('id').substr(4);
 
-    this.quickReply.appendQuote(username, quote);
+    this.quickReply.appendQuote(postid);
+
     this.quickReply.show();
 };
 
