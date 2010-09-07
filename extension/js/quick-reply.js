@@ -33,12 +33,14 @@ function QuickReplyBox(forum_post_key, base_image_uri, bookmark) {
     this.base_image_uri = base_image_uri;
     this.bookmark = bookmark;
     this.reply_url = 'http://forums.somethingawful.com/newreply.php';
+    this.edit_url = 'http://forums.somethingawful.com/editpost.php';
 
     this.quickReplyState = {
         expanded: false,
         visible: false,
         sidebar_visible: false,
-        topbar_visible: false
+        topbar_visible: false,
+        wait_for_quote: false
     };
 
     // TODO: Pull these from the extension, cache them there
@@ -84,9 +86,10 @@ QuickReplyBox.prototype.create = function(username, quote) {
                 '   </div>' +
                 '</div>' + 
                 '<div id="quick-reply"> ' + 
-                '   <form enctype="multipart/form-data" action="newreply.php" name="vbform" method="POST" onsubmit="return validate(this)">' +
-                '       <input type="hidden" name="action" value="postreply">' + 
+                '   <form id="quick-reply-form" enctype="multipart/form-data" action="newreply.php" name="vbform" method="POST" onsubmit="return validate(this)">' +
+                '       <input id="quick-reply-action" type="hidden" name="action" value="postreply">' + 
                 '       <input type="hidden" name="threadid" value="' + findThreadID() + '">' + 
+                '       <input id="quick-reply-postid" type="hidden" name="postid" value="">' + 
                 '       <input type="hidden" name="formkey" value="' + this.forum_post_key + '">' + 
                 '       <input type="hidden" name="form_cookie" value="formcookie">' + 
                 '       <div id="title-bar">' + 
@@ -238,6 +241,13 @@ QuickReplyBox.prototype.hide = function() {
     jQuery(document).trigger('enableSALRHotkeys');
     jQuery('#quick-reply').hide("slow");
     jQuery('#post-message').val('');
+
+    // Return to quick reply mode
+    jQuery('div#title-bar').text('Quick Reply');
+    jQuery('form#quick-reply-form').attr('action', 'newreply.php');
+    jQuery('input#quick-reply-action').val('postreply');
+    jQuery('input#quick-reply-postid').val('');
+
     this.quickReplyState.expanded = false;
 };
 
@@ -267,8 +277,20 @@ QuickReplyBox.prototype.appendText = function(text) {
     jQuery('#topbar-preview').html(parser.fetchResult());
 };
 
+QuickReplyBox.prototype.prependText = function(text) {
+    var current_message = jQuery('#post-message').val();
+
+    jQuery('#post-message').val(text + current_message);
+
+    var parser = new PreviewParser(jQuery('#post-message').val(), this.emotes);
+    jQuery('#topbar-preview').html(parser.fetchResult());
+};
+
 QuickReplyBox.prototype.appendQuote = function(postid) {
     var that = this;
+
+    if (!this.quickReplyState.expanded)
+        this.quickReplyState.wait_for_quote = true;
 
     // Call up SA's quote page
     jQuery.get(this.reply_url,
@@ -282,8 +304,38 @@ QuickReplyBox.prototype.appendQuote = function(postid) {
                     var quote = '';
                     if (textarea.length)
                         quote = textarea.val();
-                    that.appendText(quote);
+
+                    if (that.quickReplyState.wait_for_quote) {
+                        that.prependText(quote);
+                        that.quickReplyState.wait_for_quote=false;
+                    } else {
+                        that.appendText(quote);
+                    }
                 });
+};
+
+QuickReplyBox.prototype.editPost = function(postid) {
+    var that = this;
+
+    // Call up SA's quote page
+    jQuery.get(this.edit_url,
+                {
+                    action: 'editpost',
+                    postid: postid
+                },
+                function(response) {
+                    // Pull quoted text from reply box
+                    var textarea = jQuery(response).find('textarea[name=message]')
+                    var edit = '';
+                    if (textarea.length)
+                        edit = textarea.val();
+                    jQuery('#post-message').val(edit);
+                });
+
+    jQuery('div#title-bar').text('Quick Edit');
+    jQuery('form#quick-reply-form').attr('action', 'editpost.php');
+    jQuery('input#quick-reply-action').val('updatepost');
+    jQuery('input#quick-reply-postid').val(postid);
 };
 
 QuickReplyBox.prototype.toggleView = function() {
