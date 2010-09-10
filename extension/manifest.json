@@ -1,6 +1,6 @@
 {
   "name": "Something Awful Last Read", 
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Highlights posts which quote the user", 
   "icons": {
 	  		  "16": "images/logo16.png",
@@ -16,7 +16,6 @@
         "js/jquery/jquery.js",
         "js/jquery/jquery-ui.js",
         "js/jquery/jquery.transform.min.js",
-        "js/jquery/jquery.filedrop.js",
         "js/jquery/jquery.rightclick.js",
         "js/jquery/jquery.fieldselection.js",
 		"js/jquery/jquery.putCursorAtEnd.1.0.js",
@@ -47,7 +46,9 @@
   ], 
   "permissions": [
         "tabs",
-        "http://waffleimages.com/upload"
+        "http://waffleimages.com/*",
+        "http://api.imgur.com/*",
+        "http://dev.vokalinteractive.com/m4/*"
   ],
   "page_actions": [
     {

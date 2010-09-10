@@ -105,11 +105,12 @@ QuickReplyBox.prototype.create = function(username, quote) {
                 '       <div id="tag-menu" class="sidebar-menu">' +
                 '           <img src="' + this.base_image_uri + "quick-reply-tags.gif" + '" />' +
                 '       </div>' +
-                /************************WAFFLE IMAGES************************
                 '       <div id="waffle-images-menu" class="sidebar-menu">' +
                 '           <img src="' + this.base_image_uri + "quick-reply-waffle.gif" + '" />' +
                 '       </div>' +
-                *************************************************************/
+                '       <div id="imgur-images-menu" class="sidebar-menu">' +
+                '           <img src="' + this.base_image_uri + "quick-reply-imgur.png" + '" />' +
+                '       </div>' +
                 '       <div id="post-input-field">' +
                 '<textarea name="message" rows="18" size="10" id="post-message">' +
                 '</textarea>' +
@@ -314,8 +315,25 @@ QuickReplyBox.prototype.appendQuote = function(postid) {
                 });
 };
 
-QuickReplyBox.prototype.editPost = function(postid) {
+QuickReplyBox.prototype.appendImage = function(original, thumbnail, type) {
+    var result = null;
+
+    if (type == 'thumbnail') {
+        result = '[timg]' + thumbnail + '[/timg]\n';
+        result += '[url=' + original + ']Click here to view the full image[/url]\n';
+    } else {
+        result = '[img]' + original + '[/img]\n';
+    }
+
+    this.appendText(result);
+};
+
+QuickReplyBox.prototype.editPost = function(postid, subscribe) {
     var that = this;
+
+    if (subscribe) {
+        jQuery('input#quickReplyBookmark').attr('checked', true);
+    }
 
     // Call up SA's quote page
     jQuery.get(this.edit_url,
@@ -406,6 +424,9 @@ QuickReplyBox.prototype.toggleSidebar = function(element) {
             break;
         case 'waffle-images-menu':
             populate_method = this.setWaffleImagesSidebar;
+            break;
+        case 'imgur-images-menu':
+            populate_method = this.setImgurImagesSidebar;
             break;
     }
 
@@ -506,7 +527,7 @@ QuickReplyBox.prototype.setBBCodeSidebar = function() {
 QuickReplyBox.prototype.setWaffleImagesSidebar = function() {
     html = '<div id="dropzone">' +
            '    <h1>Drop files here</h1>' +
-           '    <p>To add them as attachments</p>' +
+           '    <p>To upload them to Waffle Images</p>' +
            '    <input type="file" multiple="true" id="filesUpload" />' +
            '</div>';
 
@@ -514,65 +535,20 @@ QuickReplyBox.prototype.setWaffleImagesSidebar = function() {
 
     this.sidebar_html = html;
 
-    $('div#dropzone').filedrop({
-        url: 'http://waffleimages.com/upload',              // upload handler, handles each file separately
-        paramname: 'file',          // POST parameter name used on serverside to reference file
-        data: { 
-            mode: 'file',           // send POST variables
-            tg_format: 'xml',
-        },
-        error: function(err, file) {
-            switch(err) {
-                case 'BrowserNotSupported':
-                    alert('browser does not support html5 drag and drop')
-                    break;
-                case 'TooManyFiles':
-                    // user uploaded more than 'maxfiles'
-                    break;
-                case 'FileTooLarge':
-                    // program encountered a file whose size is greater than 'maxfilesize'
-                    // FileTooLarge also has access to the file which was too large
-                    // use file.name to reference the filename of the culprit file
-                    break;
-                default:
-                    break;
-            }
-        },
-        maxfiles: 25,
-        maxfilesize: 20,    // max file size in MBs
-        dragOver: function() {
-            // user dragging files over #dropzone
-        },
-        dragLeave: function() {
-            // user dragging files out of #dropzone
-        },
-        docOver: function() {
-            // user dragging files anywhere inside the browser document window
-        },
-        docLeave: function() {
-            // user dragging files out of the browser document window
-        },
-        drop: function() {
-            // user drops file
-        },
-        uploadStarted: function(i, file, len){
-            // a file began uploading
-            // i = index => 0, 1, 2, 3, 4 etc
-            // file is the actual file of the index
-            // len = total files user dropped
-        },
-        uploadFinished: function(i, file, response, time) {
-            // response is the data you got back from server in JSON format.
-            console.log(response);
-        },
-        progressUpdated: function(i, file, progress) {
-            // this function is used for large files and updates intermittently
-            // progress is the integer value of file being uploaded percentage to completion
-        },
-        speedUpdated: function(i, file, speed) {
-            // speed in kb/s
-        }
+    jQuery('input#filesUpload').change(function(event) {
+        console.log(jQuery(this).get(0).files);
+        postMessage({
+            'message': 'UploadWaffleImages',
+            'file': jQuery(this).get(0).files[0]
+        });
     });
+};
+
+QuickReplyBox.prototype.setImgurImagesSidebar = function() {
+    html = '<iframe src="' + chrome.extension.getURL('/') + 'imgur-upload.html" width="162" height="245" frameborder="0"></iframe>';
+    jQuery('#sidebar-list').html(html);
+
+    this.sidebar_html = html;
 };
 
 QuickReplyBox.prototype.isExpanded = function() {
