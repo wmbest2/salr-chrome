@@ -83,6 +83,8 @@ QuickReplyBox.prototype.create = function(username, quote) {
                 '</div>' +
                 '<div id="top-bar">' +
                 '   <div id="topbar-preview">' +
+                '      <div id="preview-content">' +
+                '      </div>' +
                 '   </div>' +
                 '</div>' + 
                 '<div id="quick-reply"> ' + 
@@ -105,14 +107,16 @@ QuickReplyBox.prototype.create = function(username, quote) {
                 '       <div id="tag-menu" class="sidebar-menu">' +
                 '           <img src="' + this.base_image_uri + "quick-reply-tags.gif" + '" />' +
                 '       </div>' +
-                '       <div id="waffle-images-menu" class="sidebar-menu">' +
-                '           <img src="' + this.base_image_uri + "quick-reply-waffle.gif" + '" />' +
-                '       </div>' +
                 '       <div id="imgur-images-menu" class="sidebar-menu">' +
                 '           <img src="' + this.base_image_uri + "quick-reply-imgur.png" + '" />' +
                 '       </div>' +
+                /*****************BROKEN****************
+                '       <div id="waffle-images-menu" class="sidebar-menu">' +
+                '           <img src="' + this.base_image_uri + "quick-reply-waffle.gif" + '" />' +
+                '       </div>' +
+                ***************************************/
                 '       <div id="post-input-field">' +
-                '<textarea name="message" rows="18" size="10" id="post-message">' +
+                '<textarea name="message" rows="18" size="10" id="post-message" tabindex="1">' +
                 '</textarea>' +
                 '       </div>' +
                 '       <div id="post-options">' +
@@ -143,8 +147,8 @@ QuickReplyBox.prototype.create = function(username, quote) {
                 '           </label>' + 
                 '       </div>' +
                 '       <div id="submit-buttons">' +
-                '           <input type="submit" class="bginput" name="preview" value="Preview Reply">' + 
-                '           <input type="submit" class="bginput" name="submit" value="Submit Reply">' + 
+                '           <input type="submit" class="bginput" name="preview" value="Preview Reply" tabindex="3">' + 
+                '           <input type="submit" class="bginput" name="submit" value="Submit Reply" tabindex="2">' + 
                 '       </div>' +
                 '   </form>' +
                '</div>';
@@ -248,6 +252,7 @@ QuickReplyBox.prototype.hide = function() {
     jQuery('form#quick-reply-form').attr('action', 'newreply.php');
     jQuery('input#quick-reply-action').val('postreply');
     jQuery('input#quick-reply-postid').val('');
+    jQuery('input[name="submit"]').attr('value', 'Submit Reply');
 
     this.quickReplyState.expanded = false;
 };
@@ -269,13 +274,20 @@ QuickReplyBox.prototype.fetchFormCookie = function(threadid) {
                });
 };
 
+QuickReplyBox.prototype.updatePreview = function() {
+    var parser = new PreviewParser(jQuery('#post-message').val(), this.emotes);
+    jQuery('#preview-content').html(parser.fetchResult());
+
+    var content = document.getElementById('topbar-preview');
+    content.scrollTop = content.scrollHeight;
+};
+
 QuickReplyBox.prototype.appendText = function(text) {
     var current_message = jQuery('#post-message').val();
 
     jQuery('#post-message').val(current_message + text);
 
-    var parser = new PreviewParser(jQuery('#post-message').val(), this.emotes);
-    jQuery('#topbar-preview').html(parser.fetchResult());
+    this.updatePreview();
 };
 
 QuickReplyBox.prototype.prependText = function(text) {
@@ -283,8 +295,7 @@ QuickReplyBox.prototype.prependText = function(text) {
 
     jQuery('#post-message').val(text + current_message);
 
-    var parser = new PreviewParser(jQuery('#post-message').val(), this.emotes);
-    jQuery('#topbar-preview').html(parser.fetchResult());
+    this.updatePreview();
 };
 
 QuickReplyBox.prototype.appendQuote = function(postid) {
@@ -331,10 +342,6 @@ QuickReplyBox.prototype.appendImage = function(original, thumbnail, type) {
 QuickReplyBox.prototype.editPost = function(postid, subscribe) {
     var that = this;
 
-    if (subscribe) {
-        jQuery('input#quickReplyBookmark').attr('checked', true);
-    }
-
     // Call up SA's quote page
     jQuery.get(this.edit_url,
                 {
@@ -354,6 +361,12 @@ QuickReplyBox.prototype.editPost = function(postid, subscribe) {
     jQuery('form#quick-reply-form').attr('action', 'editpost.php');
     jQuery('input#quick-reply-action').val('updatepost');
     jQuery('input#quick-reply-postid').val(postid);
+    jQuery('input[name="submit"]').attr('value', 'Edit Post');
+
+    if (subscribe) {
+        jQuery('input#quickReplyBookmark').attr('checked', true);
+    }
+
 };
 
 QuickReplyBox.prototype.toggleView = function() {
@@ -484,8 +497,7 @@ QuickReplyBox.prototype.notify = function(emotes) {
     this.emotes = emotes;
 
     jQuery('#post-message').keyup(function() {
-        var parser = new PreviewParser(jQuery(this).val(), emotes);
-        jQuery('#topbar-preview').html(parser.fetchResult());
+        that.updatePreview();
     });
 
     this.setEmoteSidebar();
@@ -525,23 +537,10 @@ QuickReplyBox.prototype.setBBCodeSidebar = function() {
 };
 
 QuickReplyBox.prototype.setWaffleImagesSidebar = function() {
-    html = '<div id="dropzone">' +
-           '    <h1>Drop files here</h1>' +
-           '    <p>To upload them to Waffle Images</p>' +
-           '    <input type="file" multiple="true" id="filesUpload" />' +
-           '</div>';
-
+    html = '<iframe src="' + chrome.extension.getURL('/') + 'waffle-upload.html" width="162" height="245" frameborder="0"></iframe>';
     jQuery('#sidebar-list').html(html);
 
     this.sidebar_html = html;
-
-    jQuery('input#filesUpload').change(function(event) {
-        console.log(jQuery(this).get(0).files);
-        postMessage({
-            'message': 'UploadWaffleImages',
-            'file': jQuery(this).get(0).files[0]
-        });
-    });
 };
 
 QuickReplyBox.prototype.setImgurImagesSidebar = function() {

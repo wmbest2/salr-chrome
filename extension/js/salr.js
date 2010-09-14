@@ -392,19 +392,19 @@ SALR.prototype.updateStyling = function() {
 	
 	// Hide individual top menu items
 	if (this.settings.topPurchaseAcc == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=register'])").each(function() {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/register.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
 
 	if (this.settings.topPurchasePlat == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=platinum'])").each(function() {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/platinum.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
 	
 	if (this.settings.topPurchaseAva == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=custom_title'])").each(function() {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/titlechange.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
@@ -416,13 +416,13 @@ SALR.prototype.updateStyling = function() {
 	}
 
 	if (this.settings.topPurchaseArchives == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=archive'])").each(function() {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/archives.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
 
 		if (this.settings.topPurchaseNoAds == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=noads'])").each(function() {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/noads.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
@@ -1302,7 +1302,7 @@ SALR.prototype.tldrQuotes = function() {
         {
             jQuery("span.tldr", obj).remove();
             blockquote.css({display:"block"});
-            clickText.text("Click quote to collapse");
+            clickText.text("Double-Click quote to collapse");
         }
         else
         {
@@ -1332,20 +1332,23 @@ SALR.prototype.tldrQuotes = function() {
             blockquote.before(tldrSpan);
 
             blockquote.css({display:"none"});
-            clickText.text("Click quote to expand");
+            clickText.text("Double-Click quote to expand");
         }
+        
+        window.getSelection().removeAllRanges();
+        
         jQuery(obj).data("tldrHidden", !hidden);
     }
     
     jQuery("div.bbc-block").each(function(i, obj){
         jQuery(obj).data("tldrHidden", false);
-        jQuery(obj).click(tldrHideQuote);
+        jQuery(obj).dblclick(tldrHideQuote);
         
-        jQuery("h4", obj).before("<span class='tldrclick' style='font-size: 70%; text-transform: uppercase; float: right; margin: 2px; font-weight: bold;'>Click quote to collapse</span>");
+        jQuery("h4", obj).before("<span class='tldrclick' style='font-size: 70%; text-transform: uppercase; float: right; margin: 2px; font-weight: bold;'>Double-Click quote to collapse</span>");
         
-        if(that.settings.autoTLDR && jQuery(obj).height() > 400){
+        if(that.settings.autoTLDR == 'true' && jQuery(obj).height() > 400){
             tldrHideQuote(obj);
-            jQuery("span.tldrclick", obj).text("Click quote to expand");
+            jQuery("span.tldrclick", obj).text("Double-Click quote to expand");
         }
     });
 };
@@ -1414,7 +1417,7 @@ SALR.prototype.bindQuickReply = function() {
         });
     });
 
-    jQuery('a > img[alt="Edit"]').each(function() {
+    jQuery('a[href*=editpost.php] > img[alt="Edit"]').each(function() {
         jQuery(this).parent().attr('href', 'javascript:;');
 
         var parentTable = jQuery(this).parents('table.post');

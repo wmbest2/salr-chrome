@@ -62,6 +62,10 @@ ImageUploader.prototype.fireEvent = function(event) {
     }
 };
 
+ImageUploader.prototype.addParam = function(key, value) {
+    this.params[key] = value;
+};
+
 ImageUploader.prototype.upload = function(image, paramname) {
     var that = this;
 
@@ -76,6 +80,9 @@ ImageUploader.prototype.upload = function(image, paramname) {
         });
     };
 
+    // TODO: There needs to be a better way to send parameters
+    // in the POST header but FormData seems to drop the file
+    // when appending it.
     var parameter_url = this.url + "?";
 
     for (var key in this.params) {
@@ -83,19 +90,23 @@ ImageUploader.prototype.upload = function(image, paramname) {
     }
 
     console.log(parameter_url);
-
     xhr.open("POST", parameter_url, true);
     xhr.setRequestHeader("Content-Type", "multipart/form-data");
+
+    console.log(image);
     
     xhr.send(image);  
 
     xhr.onload = function() { 
+        console.log(xhr.responseText);
         var result = {};
 
         switch (xhr.status) {
             case 500:
+            case 400:
                 result = {
-                    type: 'onError'
+                    type: 'onError',
+                    response: xhr.responseText
                 };
                 break;
             default:
@@ -108,4 +119,19 @@ ImageUploader.prototype.upload = function(image, paramname) {
 
         that.fireEvent(result);
     };
+};
+
+ImageUploader.prototype.uploadUrl = function(image_url, paramname) {
+    var that = this;
+
+    this.params[paramname] = image_url;
+
+    jQuery.post(this.url,
+               this.params,
+               function(response) {
+                   that.fireEvent({
+                       type: 'onComplete',
+                       response: response 
+                   });
+               });
 };
