@@ -45,7 +45,8 @@ PreviewParser.prototype.parseSmilies = function() {
         var img = this.emote_list[index].image;
 
         if (this.post_text.indexOf(title) != -1) {
-            this.post_text = this.post_text.replace(title, '<img src="' + img + '" title="' + title + '" border="0" alt="" />');
+            var re = new RegExp(title, 'g');
+            this.post_text = this.post_text.replace(re, '<img src="' + img + '" title="' + title + '" border="0" alt="" />');
         }
     }
 };
@@ -64,11 +65,14 @@ PreviewParser.prototype.parseQuotes = function() {
 PreviewParser.prototype.parseImages = function() {
     var image_re = /\[img\](.*?)\[\/img\]/g;
     var thumb_image_re = /\[timg\](.*?)\[\/timg\]/g;
+    var attach_re = /src="attachment:(\d+)"/g;
     var image_format = '<img src="$1" />'
     var thumb_image_format = '<img class="timg loading" src="$1" />'
+    var attach_format = 'src="http://forums.somethingawful.com/attachment.php?attachmentid=$1"';
 
     this.post_text = this.post_text.replace(image_re, image_format);
     this.post_text = this.post_text.replace(thumb_image_re, thumb_image_format);
+    this.post_text = this.post_text.replace(attach_re, attach_format);
 };
 
 PreviewParser.prototype.parseFormatting = function() {

@@ -63,6 +63,16 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
             break;
         case 'forumdisplay.php':
         case 'showthread.php':
+            if (window.location.href.indexOf('showpost') >= 0) {
+                // Single post view doesn't work for archived threads
+                // Switch to a goto post link
+                if (jQuery('td.postbody').length == 0) {
+                    var m = window.location.href.match(/postid=(\d+)/);
+                    jumpToPage('http://forums.somethingawful.com/showthread.php?goto=post&postid='+m[1]);
+                    return;
+                }
+            }
+
             if (this.settings.inlineVideo == 'true') {
                 this.inlineYoutubes();
             }
@@ -107,7 +117,10 @@ return (obj.textContent || obj.innerText || $(obj).text() || "").toLowerCase() =
             }
 
             this.displaySinglePostLink();
-            this.tldrQuotes();
+
+            if (this.settings.collapseTldrQuotes == 'true') {
+                this.tldrQuotes();
+            }
 
             // Display Rap Sheet link on single post view
             if (window.location.href.indexOf('showpost') >= 0) {
@@ -427,32 +440,26 @@ SALR.prototype.updateStyling = function() {
 		});
 	}
 
-	if (this.settings.topPurchaseNewUsername == 'false') {
+	if (this.settings.topPurchaseUsername == 'false') {
 		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/namechange.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
 
-	if (this.settings.topPurchaseNonProfAd == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=banner_ad_internal'])").each(function() {
-			jQuery(this).remove();
-		});
-	}
-
-	if (this.settings.topPurchaseForProfAd == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=banner_ad'])").each(function() {
+	if (this.settings.topPurchaseBannerAd == 'false') {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/ad-banner.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
 
 	if (this.settings.topPurchaseEmoticon == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=smilie'])").each(function() {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/smilie.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
 
 	if (this.settings.topPurchaseSticky == 'false') {
-		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/forumsystem/index.php?item=sticky'])").each(function() {
+		jQuery("#nav_purchase li:has(a[href='https://secure.somethingawful.com/products/sticky-thread.php'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
@@ -518,7 +525,7 @@ SALR.prototype.updateStyling = function() {
 	}
 
 	if (this.settings.topLogout == 'false') {
-		jQuery("#navigation li:has(a[href='/account.php?s=&action=logout&ma=0339831a'])").each(function() {
+		jQuery("#navigation li:has(a[href*='account.php?action=logout'])").each(function() {
 			jQuery(this).remove();
 		});
 	}
@@ -625,7 +632,7 @@ SALR.prototype.skimModerators = function() {
                     "24587"  : {'username' : ['hoodrow trillson'], 'mod' : 'A'},
                     "27691"  : {'username' : ['Lowtax'], 'mod' : 'A'},
                     "51697"  : {'username' : ['angerbotSD','angerbot'], 'mod' : 'A'},
-                    "62392"  : {'username' : ['Tiny Fistpump'], 'mod' : 'A'},
+                    "62392"  : {'username' : ['Tiny Fistpump','T. Finn'], 'mod' : 'A'},
                     "114975" : {'username' : ['SA Support Robot'], 'mod' : 'A'},
                     "137488" : {'username' : ['Garbage Day'], 'mod' : 'A'},
                     "147983" : {'username' : ['Peatpot'], 'mod' : 'A'},
@@ -700,13 +707,12 @@ SALR.prototype.inlineYoutubes = function() {
 			var match = jQuery(this).attr('href').match(/^http\:\/\/((?:www|[a-z]{2})\.)?youtube\.com\/watch\?v=([-_0-9a-zA-Z]+)/); //get youtube video id
 			var videoId = match[2];
 
-			jQuery(this).after("<p><embed class = 'salr-player' /></p>"); //make new embed for video
-			jQuery(".salr-player").attr("id",videoId);
-			jQuery(".salr-player").attr("src","http://www.youtube.com/v/" + videoId);
-			jQuery(".salr-player").attr("width","450");
-			jQuery(".salr-player").attr("height","370");
-			jQuery(".salr-player").attr("type","application/x-shockwave-flash");
-			jQuery(".salr-player").attr("wmode","transparent");
+            jQuery(this).after('<iframe class="salr-player youtube-player"></iframe>');
+			jQuery(".salr-player").attr("src", "http://www.youtube.com/embed/" + videoId);
+			jQuery(".salr-player").attr("width","640");
+			jQuery(".salr-player").attr("height","385");
+			jQuery(".salr-player").attr("type","text/html");
+			jQuery(".salr-player").attr("frameborder","0");
 
 			return false;
 		},
